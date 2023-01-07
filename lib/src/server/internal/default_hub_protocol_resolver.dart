@@ -1,5 +1,5 @@
 import 'package:extensions/logging.dart';
-import 'package:signalr/src/common/protocol/hub_protocol.dart';
+import 'package:signalr/src/common/signalr_common/protocol/hub_protocol.dart';
 import 'package:signalr/src/server/hub_protocol_resolver.dart';
 
 class DefaultHubProtocolResolver implements HubProtocolResolver {

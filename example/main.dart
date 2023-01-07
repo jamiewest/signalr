@@ -5,9 +5,9 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:signalr/signalr.dart';
-import 'package:signalr/src/client/http/http_connection.dart';
-import 'package:signalr/src/client/http/http_connection_options.dart';
-import 'package:signalr/src/common/http/http_transports.dart';
+import 'package:signalr/src/client/http_connections_client/http_connection.dart';
+import 'package:signalr/src/client/http_connections_client/http_connection_options.dart';
+import 'package:signalr/src/common/http_connections/http_transports.dart';
 import 'package:sse/server/sse_handler.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 

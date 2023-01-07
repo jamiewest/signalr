@@ -28,7 +28,9 @@ class HubClients {
       );
 
   ClientProxy groupExcept(
-          String groupName, List<String> excludedConnectionIds) =>
+    String groupName,
+    List<String> excludedConnectionIds,
+  ) =>
       GroupExceptProxy(
         lifetimeManager: _lifetimeManager,
         groupName: groupName,

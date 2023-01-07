@@ -7,8 +7,11 @@ environment:
   sdk: '>=2.18.4 <3.0.0'
 
 dependencies:
+  async: ^2.10.0
+  basics: ^0.9.0
   characters: ^1.2.1
-  extensions: ^0.3.8
+  chunked_stream: ^1.4.1
+  extensions: ^0.3.10
   http: ^0.13.5
   os_detect: ^2.0.1
   path: ^1.8.2

@@ -1,4 +1,4 @@
-import 'package:signalr/src/common/protocol/hub_protocol.dart';
+import 'package:signalr/src/common/signalr_common/protocol/hub_protocol.dart';
 
 /// A resolver abstraction for working with [HubProtocol] instances.
 abstract class HubProtocolResolver {

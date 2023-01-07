@@ -5,14 +5,12 @@ import 'hub_clients.dart';
 
 /// A context abstraction for a hub.
 class HubContext {
-  final HubLifetimeManager _lifetimeManager;
   final HubClients _clients;
   final GroupManager _groups;
 
   HubContext({
     required HubLifetimeManager lifetimeManager,
-  })  : _lifetimeManager = lifetimeManager,
-        _clients = HubClients(lifetimeManager),
+  })  : _clients = HubClients(lifetimeManager),
         _groups = GroupManager(lifetimeManager);
 
   /// Gets a [HubClients] that can be used to invoke methods on
