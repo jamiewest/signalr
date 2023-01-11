@@ -16,7 +16,7 @@ class ShelfHostedService extends HostedService {
   @override
   Future<void> start(CancellationToken cancellationToken) async {
     final cascade = Cascade();
-    _handlers.forEach((handler) => cascade.add(handler));
+    _handlers.forEach(cascade.add);
 
     final handler = cascade.handler;
 

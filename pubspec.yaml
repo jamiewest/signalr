@@ -11,14 +11,14 @@ dependencies:
   basics: ^0.9.0
   characters: ^1.2.1
   chunked_stream: ^1.4.1
-  extensions: ^0.3.10
+  extensions: ^0.3.11
   http: ^0.13.5
   os_detect: ^2.0.1
   path: ^1.8.2
   pub_semver: ^2.1.3
   quiver: ^3.1.0
   shelf: ^1.4.0
-  shelf_web_socket: ^1.0.3
+  #shelf_web_socket: ^1.0.3
   sse: ^4.1.1
   stream_channel: ^2.1.1
   uri: ^1.0.0

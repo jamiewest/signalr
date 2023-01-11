@@ -1,18 +1,14 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:extensions/logging.dart';
-import 'package:extensions/primitives.dart';
 import 'package:quiver/strings.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-import 'package:signalr/signalr.dart';
-import 'package:signalr/src/common/signalr_common/protocol/completion_message.dart';
-
-import '../hub_connection.dart';
+import '../../../../signalr.dart';
+import '../../../common/signalr_common/protocol/completion_message.dart';
 
 abstract class InvocationRequest implements Disposable {
-  // CancellationTokenRegistration _cancellationTokenRegistration;
+  late final CancellationTokenRegistration _cancellationTokenRegistration;
   Logger _logger;
   Type _resultType;
   CancellationToken _cancellationToken;
@@ -31,6 +27,10 @@ abstract class InvocationRequest implements Disposable {
         _logger = logger,
         _hubConnection = hubConnection {
     _logger.invocationCreated(invocationId);
+    _cancellationTokenRegistration = cancellationToken.register(
+      (self) => (self as InvocationRequest).cancel(),
+      this,
+    );
   }
 
   factory InvocationRequest.invoke(
@@ -39,15 +39,14 @@ abstract class InvocationRequest implements Disposable {
     String invocationId,
     LoggerFactory loggerFactory,
     HubConnection hubConnection,
-  ) {
-    return NonStreaming(
-      cancellationToken: cancellationToken,
-      resultType: resultType,
-      invocationId: invocationId,
-      loggerFactory: loggerFactory,
-      hubConnection: hubConnection,
-    );
-  }
+  ) =>
+      NonStreaming(
+        cancellationToken: cancellationToken,
+        resultType: resultType,
+        invocationId: invocationId,
+        loggerFactory: loggerFactory,
+        hubConnection: hubConnection,
+      );
 
   factory InvocationRequest.stream(
     CancellationToken cancellationToken,
@@ -55,34 +54,38 @@ abstract class InvocationRequest implements Disposable {
     String invocationId,
     LoggerFactory loggerFactory,
     HubConnection hubConnection,
-  ) {
-    return Streaming(
-      cancellationToken: cancellationToken,
-      resultType: resultType,
-      invocationId: invocationId,
-      loggerFactory: loggerFactory,
-      hubConnection: hubConnection,
-    );
-  }
+  ) =>
+      Streaming(
+        cancellationToken: cancellationToken,
+        resultType: resultType,
+        invocationId: invocationId,
+        loggerFactory: loggerFactory,
+        hubConnection: hubConnection,
+      );
+
+  Type get resultType => _resultType;
+  CancellationToken get cancellationToken => _cancellationToken;
+  String get invocationId => _invocationId;
+  HubConnection get hubConnection => _hubConnection;
 
   void fail(Exception exception);
   void complete(CompletionMessage message);
   Future<bool> streamItem(Object? item);
-  void _cancel();
+  void cancel();
 
   @override
   void dispose() {
     _logger.invocationDisposed(_invocationId);
 
     // Just in case it hasn't already been completed
-    _cancel();
+    cancel();
 
-    //_cancellationTokenRegistration.Dispose();
+    _cancellationTokenRegistration.dispose();
   }
 }
 
 class Streaming extends InvocationRequest {
-  StreamChannelController<Object?> _channel = StreamChannelController();
+  final StreamChannelController<Object?> _channel = StreamChannelController();
 
   Streaming({
     required super.cancellationToken,
@@ -130,6 +133,11 @@ class Streaming extends InvocationRequest {
   void _cancel() {
     _channel.local.sink.close();
   }
+
+  @override
+  void cancel() {
+    // TODO: implement cancel
+  }
 }
 
 class NonStreaming extends InvocationRequest {
@@ -168,13 +176,18 @@ class NonStreaming extends InvocationRequest {
     _completer.completeError(Exception(
         'Streaming hub methods must be invoked with the \'HubConnectionExtensions.streamAsChannel\' method.'));
 
-    // We \'delivered\' the stream item successfully as far as the caller cares
+    // We 'delivered' the stream item successfully as far as the caller cares
     return Future.value(true);
   }
 
   @override
   void _cancel() {
     _completer.complete();
+  }
+
+  @override
+  void cancel() {
+    // TODO: implement cancel
   }
 }
 
@@ -184,28 +197,28 @@ extension InvocationRequestLoggerExtensions on Logger {
   void invocationCreated(String invocationId) {
     logTrace(
       'Invocation $invocationId created.',
-      eventId: EventId(1, 'InvocationCreated'),
+      eventId: const EventId(1, 'InvocationCreated'),
     );
   }
 
   void invocationDisposed(String invocationId) {
     logTrace(
       'Invocation $invocationId disposed.',
-      eventId: EventId(2, 'InvocationDisposed'),
+      eventId: const EventId(2, 'InvocationDisposed'),
     );
   }
 
   void invocationCompleted(String invocationId) {
     logTrace(
       'Invocation $invocationId marked as completed.',
-      eventId: EventId(3, 'InvocationCompleted'),
+      eventId: const EventId(3, 'InvocationCompleted'),
     );
   }
 
   void invocationFailed(String invocationId) {
     logTrace(
       'Invocation $invocationId marked as failed.',
-      eventId: EventId(4, 'InvocationFailed'),
+      eventId: const EventId(4, 'InvocationFailed'),
     );
   }
 
@@ -217,7 +230,7 @@ extension InvocationRequestLoggerExtensions on Logger {
   ) {
     logError(
       'Invocation $invocationId caused an error trying to write a stream item.',
-      eventId: EventId(5, 'ErrorWritingStreamItem'),
+      eventId: const EventId(5, 'ErrorWritingStreamItem'),
       exception: exception,
     );
   }
@@ -225,7 +238,7 @@ extension InvocationRequestLoggerExtensions on Logger {
   void receivedUnexpectedComplete(String invocationId) {
     logError(
       'Invocation $invocationId received a completion result, but was invoked as a streaming invocation.',
-      eventId: EventId(6, 'ReceivedUnexpectedComplete'),
+      eventId: const EventId(6, 'ReceivedUnexpectedComplete'),
     );
   }
 
@@ -234,7 +247,7 @@ extension InvocationRequestLoggerExtensions on Logger {
   void streamItemOnNonStreamInvocation(String invocationId) {
     logError(
       'Invocation $invocationId received stream item but was invoked as a non-streamed invocation.',
-      eventId: EventId(7, 'StreamItemOnNonStreamInvocation'),
+      eventId: const EventId(7, 'StreamItemOnNonStreamInvocation'),
     );
   }
 }

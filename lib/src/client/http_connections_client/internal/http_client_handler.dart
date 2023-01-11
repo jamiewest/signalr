@@ -8,6 +8,7 @@ class HttpClientHandler extends http.BaseClient {
     this._inner,
   );
 
+  @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     _properties.clear();
 

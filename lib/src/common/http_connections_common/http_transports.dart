@@ -1,3 +1,28 @@
+import 'http_transport_type.dart';
+
+extension HttpTransportTypes on Iterable<HttpTransportType> {
+  bool get hasWebSockets => contains(HttpTransportType.webSockets);
+  bool get hasServerSentEvents => contains(HttpTransportType.serverSentEvents);
+  bool get hasLongPolling => contains(HttpTransportType.longPolling);
+  bool get hasNone => length == 0;
+
+  static Iterable<HttpTransportType> get all => const <HttpTransportType>[
+        HttpTransportType.longPolling,
+        HttpTransportType.serverSentEvents,
+        HttpTransportType.webSockets
+      ];
+}
+
+
+
+
+
+
+
+
+
+
+
 // import 'dart:collection';
 
 // import 'http_transport_type.dart';

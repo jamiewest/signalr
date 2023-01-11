@@ -1,6 +1,8 @@
 import 'package:extensions/hosting.dart';
 import 'package:http/http.dart';
 
+import '../../../common/http_connections_common/http_transport_type.dart';
+import '../../../common/http_connections_common/http_transports.dart';
 import '../http_connection_options.dart';
 
 import 'transport.dart';
@@ -11,12 +13,12 @@ class DefaultTransportFactory implements TransportFactory {
   final BaseClient? _httpClient;
   final HttpConnectionOptions _httpConnectionOptions;
   final AccessTokenProvider _accessTokenProvider;
-  final int _requestedTransportType;
+  final Iterable<HttpTransportType> _requestedTransportType;
   final LoggerFactory _loggerFactory;
   static bool _webSocketsSupported = true;
 
   DefaultTransportFactory({
-    required int requestedTransportType,
+    required Iterable<HttpTransportType> requestedTransportType,
     required LoggerFactory loggerFactory,
     required BaseClient? httpClient,
     required HttpConnectionOptions httpConnectionOptions,
@@ -28,10 +30,11 @@ class DefaultTransportFactory implements TransportFactory {
         _accessTokenProvider = accessTokenProvider;
 
   @override
-  Transport createTransport(int availableServerTransports) {
+  Transport createTransport(
+      Iterable<HttpTransportType> availableServerTransports) {
     if (_webSocketsSupported &&
-        hasTransport(availableServerTransports, HttpTransportType.webSockets) &&
-        hasTransport(_requestedTransportType, HttpTransportType.webSockets)) {
+        availableServerTransports.hasWebSockets &&
+        _requestedTransportType.hasWebSockets) {
       try {
         return WebSocketTransport(
           _httpConnectionOptions,
@@ -42,7 +45,7 @@ class DefaultTransportFactory implements TransportFactory {
       } on Exception catch (ex) {
         _loggerFactory.createLogger('DefaultTransportFactory').logDebug(
               'Transport \'${HttpTransportType.webSockets}\' is not supported.',
-              eventId: EventId(1, 'TransportNotSupport'),
+              eventId: const EventId(1, 'TransportNotSupport'),
               exception: ex,
             );
         _webSocketsSupported = false;

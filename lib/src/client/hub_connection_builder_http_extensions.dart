@@ -4,6 +4,7 @@ import 'package:extensions/options.dart';
 
 import '../common/http_connections/connection_factory.dart';
 import '../common/http_connections_common/end_point.dart';
+import '../common/http_connections_common/http_transport_type.dart';
 import '../common/http_connections_common/uri_end_point.dart';
 import '../common/signalr_common/protocol/hub_protocol.dart';
 import '../common/signalr_common/protocol/transfer_format.dart';
@@ -18,7 +19,7 @@ extension HubConnectionBuilderExtensions on HubConnectionBuilder {
   /// to the specified URL and transports.
   HubConnectionBuilder withUrl(
     Uri url,
-    int? transports,
+    Iterable<HttpTransportType>? transports,
     Function(HttpConnectionOptions options)? configureHttpConnection,
   ) {
     services.configure(() => HttpConnectionOptions(), (o) {

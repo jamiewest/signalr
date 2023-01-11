@@ -1,21 +1,21 @@
 import 'dart:convert';
 
-import "package:os_detect/os_detect.dart" as platform;
 import 'package:extensions/logging.dart';
 import 'package:http/http.dart';
+import 'package:os_detect/os_detect.dart' as platform;
 import 'package:quiver/strings.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:uri/uri.dart';
 
-import 'package:signalr/src/client/http_connections_client/internal/access_token_http_message_handler.dart';
-
 import '../../common/http_connections/connection_context.dart';
 import '../../common/http_connections_common/http_transport_type.dart';
+import '../../common/http_connections_common/http_transports.dart';
 import '../../common/http_connections_common/negotiation_response.dart';
 import '../../common/signalr_common/protocol/transfer_format.dart';
 
 import 'http_connection_logger_extensions.dart';
 import 'http_connection_options.dart';
+import 'internal/access_token_http_message_handler.dart';
 import 'internal/default_transport_factory.dart';
 import 'internal/http_client_handler.dart';
 import 'internal/logging_http_message_handler.dart';
@@ -29,7 +29,7 @@ import 'transport_failed_exception.dart';
 class HttpConnection implements ConnectionContext {
   final int _maxRedirects = 100;
   final int _protocolVersionNumber = 1;
-  final AccessTokenProvider _noAccessToken = () => Future<String?>.value();
+  final AccessTokenProvider _noAccessToken = Future<String?>.value;
   final Duration _httpClientTimeout = const Duration(seconds: 120);
   final Logger _logger;
   bool _started = false;
@@ -53,21 +53,8 @@ class HttpConnection implements ConnectionContext {
         _httpConnectionOptions = httpConnectionOptions,
         _url = httpConnectionOptions.url! {
     if (!httpConnectionOptions.skipNegotiation ||
-        !hasTransport(
-          httpConnectionOptions.transports!,
-          HttpTransportType.webSockets,
-        )) {
+        !httpConnectionOptions.transports!.hasWebSockets) {
       _httpClient = _createHttpClient();
-    }
-
-    if (hasTransport(
-          httpConnectionOptions.transports!,
-          HttpTransportType.serverSentEvents,
-        ) &&
-        platform.isBrowser) {
-      throw Exception(
-        'ServerSentEvents can not be the only transport specified when running in the browser.',
-      );
     }
 
     _transportFactory = DefaultTransportFactory(
@@ -75,7 +62,7 @@ class HttpConnection implements ConnectionContext {
       loggerFactory: loggerFactory,
       httpClient: _httpClient,
       httpConnectionOptions: httpConnectionOptions,
-      accessTokenProvider: _getAccessToken(),
+      accessTokenProvider: getAccessToken,
     );
   }
 
@@ -83,13 +70,14 @@ class HttpConnection implements ConnectionContext {
   String? connectionId;
 
   @override
-  set transport(StreamChannel? transport) {
+  set transport(StreamChannel<List<int>>? transport) {
     if (transport != null) {
       _transport = transport as Transport;
     }
   }
 
-  StreamChannel get transport {
+  @override
+  StreamChannel<List<int>> get transport {
     _checkDisposed();
     if (_transport == null) {
       throw Exception(
@@ -99,6 +87,7 @@ class HttpConnection implements ConnectionContext {
     return _transport!;
   }
 
+  /// Starts the connection using the specified transfer format.
   Future<void> start({
     TransferFormat? transferFormat,
     CancellationToken? cancellationToken,
@@ -143,10 +132,7 @@ class HttpConnection implements ConnectionContext {
     final transportExceptions = <Exception>[];
 
     if (_httpConnectionOptions.skipNegotiation) {
-      if (hasTransport(
-        _httpConnectionOptions.transports!,
-        HttpTransportType.webSockets,
-      )) {
+      if (_httpConnectionOptions.transports!.hasWebSockets) {
         _logger.startingTransport(HttpTransportType.webSockets, uri);
         await _startTransport(
           uri,
@@ -174,7 +160,7 @@ class HttpConnection implements ConnectionContext {
         }
 
         if (negotiationResponse.accessToken != null) {
-          String accessToken = negotiationResponse.accessToken!;
+          var accessToken = negotiationResponse.accessToken!;
           // Set the current access token factory so that future
           // requests use this access token
           _accessTokenProvider = () => Future.value(accessToken);
@@ -184,7 +170,7 @@ class HttpConnection implements ConnectionContext {
       } while (negotiationResponse.url != null && redirects < _maxRedirects);
 
       if (redirects == _maxRedirects && negotiationResponse.url != null) {
-        throw new Exception("Negotiate redirection limit exceeded.");
+        throw Exception('Negotiate redirection limit exceeded.');
       }
 
       // This should only need to happen once
@@ -195,14 +181,12 @@ class HttpConnection implements ConnectionContext {
       // don't want to parse all the transfer formats in the negotiation
       // response, and we want to allow transfer formats we don't understand
       // in the negotiate response.
-      var transferFormatString = transferFormat.toString();
+      var transferFormatString = transferFormat.name;
 
       for (var transport in negotiationResponse.availableTransports!) {
-        final transportTypes = Map.fromIterable(
-          HttpTransportType.values,
-          key: (k) => k.toString(),
-          value: (v) => v,
-        );
+        final transportTypes = {
+          for (var e in HttpTransportType.values) e.name: e
+        };
 
         if (!transportTypes.containsKey(transport.transport)) {
           _logger.transportNotSupported(transport.transport!);
@@ -215,8 +199,8 @@ class HttpConnection implements ConnectionContext {
         final transportType = transportTypes[transport.transport!];
 
         try {
-          if ((transportType & _httpConnectionOptions.transports) == 0) {
-            _logger.transportDisabledByClient(transportType);
+          if (!_httpConnectionOptions.transports!.contains(transportType)) {
+            _logger.transportDisabledByClient(transportType!);
             transportExceptions.add(
               TransportFailedException(
                 transportType: transportType.toString(),
@@ -226,12 +210,12 @@ class HttpConnection implements ConnectionContext {
           } else if (!transport.transferFormats!
               .contains(transferFormatString)) {
             _logger.transportDoesNotSupportTransferFormat(
-              transportType,
+              transportType!,
               transferFormat,
             );
             transportExceptions.add(
               TransportFailedException(
-                transportType: transportType,
+                transportType: transportType.name,
                 message:
                     'The transport does not support the \'${transferFormat.toString()}\' transfer format.',
               ),
@@ -247,17 +231,17 @@ class HttpConnection implements ConnectionContext {
               );
             }
 
-            _logger.startingTransport(transportType, uri);
+            _logger.startingTransport(transportType!, uri);
             await _startTransport(
               connectUrl,
-              transportType,
+              <HttpTransportType>[transportType],
               transferFormat,
               cancellationToken,
             );
             break;
           }
         } on Exception catch (ex) {
-          _logger.transportFailed(transportType, ex);
+          _logger.transportFailed(transportType!, ex);
 
           transportExceptions.add(
             TransportFailedException(
@@ -342,7 +326,7 @@ class HttpConnection implements ConnectionContext {
 
   Future<void> _startTransport(
     Uri connectUrl,
-    int transportType,
+    Iterable<HttpTransportType> transportType,
     TransferFormat transferFormat,
     CancellationToken? cancellationToken,
   ) async {
@@ -351,7 +335,7 @@ class HttpConnection implements ConnectionContext {
 
     try {
       await transport.start(
-        uri: connectUrl,
+        url: connectUrl,
         transferFormat: transferFormat,
         cancellationToken: cancellationToken,
       );
@@ -363,7 +347,7 @@ class HttpConnection implements ConnectionContext {
     }
 
     // Disable keep alives for long polling
-    _hasInherentKeepAlive = transportType == HttpTransportType.longPolling;
+    //_hasInherentKeepAlive = transportType == HttpTransportType.longPolling;
 
     // We successfully started, set the transport properties
     // (we don't want to set these until the transport is definitely running).
@@ -446,7 +430,6 @@ class HttpConnection implements ConnectionContext {
     return negotiationResponse;
   }
 
-  @override
   void abort({Exception? abortReason}) {}
 
   @override

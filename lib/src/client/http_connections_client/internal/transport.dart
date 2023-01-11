@@ -9,7 +9,7 @@ abstract class Transport
     with StreamChannelMixin<List<int>>
     implements StreamChannel<List<int>> {
   Future<void> start({
-    required Uri uri,
+    required Uri url,
     required TransferFormat transferFormat,
     required CancellationToken? cancellationToken,
   });

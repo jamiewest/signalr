@@ -50,7 +50,7 @@ class GroupConnectionList with MapMixin<String, HubConnectionContext> {
   HubConnectionContext? remove(Object? key) => _items[key];
 
   @override
-  bool operator ==(obj) {
+  bool operator ==(Object obj) {
     if (obj is Map<String, HubConnectionContext>) {
       return obj.length == length;
     }

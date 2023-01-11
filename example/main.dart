@@ -1,15 +1,18 @@
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
+
 import 'package:extensions/logging.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_web_socket/shelf_web_socket.dart';
+import 'package:sse/server/sse_handler.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
 import 'package:signalr/signalr.dart';
 import 'package:signalr/src/client/http_connections_client/http_connection.dart';
 import 'package:signalr/src/client/http_connections_client/http_connection_options.dart';
-import 'package:signalr/src/common/http_connections/http_transports.dart';
-import 'package:sse/server/sse_handler.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:signalr/src/common/http_connections_common/http_transport_type.dart';
 
 Future<void> main() async {
   final connection = HttpConnection(
@@ -19,15 +22,15 @@ Future<void> main() async {
         ..setMinimumLevel(LogLevel.trace),
     ),
     httpConnectionOptions: HttpConnectionOptions(
-      url: Uri.parse('ws://localhost:5115/chatHub'),
-      skipNegotiation: true,
-      transports: HttpTransportType.webSockets.value,
+      url: Uri.parse('http://localhost:5115/chatHub'),
+      //skipNegotiation: true,
+      transports: [HttpTransportType.webSockets],
     ),
   );
 
   await connection.start();
 
-  connection.transport.sink.add('hahahahha');
+  connection.transport.sink.add(utf8.encode('hahahahha'));
 }
 
 /*

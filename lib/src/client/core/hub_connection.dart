@@ -6,10 +6,13 @@ import '../../common/http_connections/connection_context.dart';
 import '../../common/http_connections/connection_factory.dart';
 import '../../common/http_connections_common/end_point.dart';
 import '../../common/shared/create_linked_token.dart';
+import '../../common/shared/date_time_extensions.dart';
+import '../../common/signalr_common/protocol/handshake_protocol.dart';
 import '../../common/signalr_common/protocol/handshake_request_message.dart';
 import '../../common/signalr_common/protocol/hub_message.dart';
 import '../../common/signalr_common/protocol/hub_protocol.dart';
 
+import 'hub_connection_builder.dart';
 import 'hub_connection_logger_extensions.dart';
 import 'hub_connection_state.dart';
 import 'internal/invocation_request.dart';
@@ -29,19 +32,19 @@ class HubConnection implements AsyncDisposable {
   /// before closing the connection.
   ///
   /// Default is 30 seconds.
-  static const Duration defaultServerTimeout = const Duration(seconds: 30);
+  static const Duration defaultServerTimeout = Duration(seconds: 30);
 
   /// The default timeout which specifies how long to wait for the handshake
   /// to respond before closing the connection.
   ///
   /// Default is 15 seconds.
-  static const Duration defaultHandshakeTimeout = const Duration(seconds: 15);
+  static const Duration defaultHandshakeTimeout = Duration(seconds: 15);
 
   /// The default interval that the client will send keep alive messages
   /// to let the server know to not close the connection.
   ///
   /// Default is 15 second interval.
-  static const Duration defaultKeepAliveInterval = const Duration(seconds: 15);
+  static const Duration defaultKeepAliveInterval = Duration(seconds: 15);
 
   final LoggerFactory _loggerFactory;
   final Logger _logger;
@@ -95,9 +98,7 @@ class HubConnection implements AsyncDisposable {
   }
 
   Future<void> _startInner([CancellationToken? cancellationToken]) async {
-    if (cancellationToken == null) {
-      cancellationToken = CancellationToken();
-    }
+    cancellationToken ??= CancellationToken();
 
     try {
       if (!_state.tryChangeState(
@@ -135,6 +136,19 @@ class HubConnection implements AsyncDisposable {
     }
   }
 
+  Future<void> stop(CancellationToken? cancellationToken) async {
+    _checkDisposed();
+    await stopCore(disposing: false);
+  }
+
+  /// Disposes the [HubConnection].
+  @override
+  Future<void> disposeAsync() async {
+    if (!_disposed) {
+      await stopCore(disposing: true);
+    }
+  }
+
   Future<void> _startCore(CancellationToken cancellationToken) async {
     cancellationToken.throwIfCancellationRequested();
 
@@ -156,7 +170,7 @@ class HubConnection implements AsyncDisposable {
       _logger.errorStartingConnection(ex);
 
       // Can't have any invocations to cancel, we're in the lock.
-      await close(startingConnectionState.connection);
+      //await close(startingConnectionState.connection);
       rethrow;
     }
 
@@ -165,11 +179,41 @@ class HubConnection implements AsyncDisposable {
     throw UnimplementedError();
   }
 
-  Future<void> stop(CancellationToken cancellationToken) {
-    throw UnimplementedError();
+  Future<void> stopCore({bool? disposing}) async {
+    _state.stopCts.cancel();
+
+    var reconnectFuture = _state.reconnectFuture;
+
+    ConnectionState? connectionState;
+
+    if (disposing! && _disposed) {
+      return;
+    }
+
+    _checkDisposed();
+    connectionState = _state.currentConnectionStateUnsynchronized;
+
+    if (connectionState != null) {
+      connectionState.stopping = true;
+    } else {
+      _state.stopCts = CancellationTokenSource();
+    }
+
+    if (disposing) {
+      _disposed = true;
+      if (_serviceProvider is AsyncDisposable) {
+        await (_serviceProvider as AsyncDisposable).disposeAsync();
+      } else {
+        (_serviceProvider as Disposable).dispose();
+      }
+    }
+
+    if (connectionState != null) {
+      await connectionState.stop();
+    }
   }
 
-  Future<void> _handshake(
+  Future<void> handshake(
     ConnectionState startingConnectionState,
     CancellationToken cancellationToken,
   ) {
@@ -180,11 +224,11 @@ class HubConnection implements AsyncDisposable {
       protocol: _protocol.name,
       version: _protocol.version,
     );
-  }
 
-  @override
-  Future<void> disposeAsync() {
-    throw UnimplementedError();
+    final result = writeRequestMessage(handshakeRequest);
+    startingConnectionState.connection.transport!.sink.add(result);
+
+    return Future.value();
   }
 
   /// Registers a handler that will be invoked when the hub method with
@@ -214,15 +258,14 @@ class HubConnection implements AsyncDisposable {
     HubMessage hubMessage,
     CancellationToken? cancellationToken,
   ) async {
-    var message = _protocol.writeMessage(
-      hubMessage,
-    );
+    var message = _protocol.writeMessage(hubMessage);
 
     _logger.sendingMessage(hubMessage);
     connectionState.connection.transport!.sink.add(message);
+    _logger.messageSent(hubMessage);
 
     // We've sent a message, so don't ping for a while
-    //connectionState.resetSendPing();
+    connectionState.resetSendPing();
   }
 }
 
@@ -233,11 +276,13 @@ class ReconnectingConnectionState {
   ReconnectingConnectionState(this._logger)
       : _overallState = HubConnectionState.disconnected;
 
+  ConnectionState? currentConnectionStateUnsynchronized;
+
   HubConnectionState get overallState => _overallState;
 
   CancellationTokenSource stopCts = CancellationTokenSource();
 
-  Future<void> reconnectTask = Future.value();
+  Future<void> reconnectFuture = Future.value();
 
   void changeState(
     HubConnectionState expectedState,
@@ -263,36 +308,128 @@ class ReconnectingConnectionState {
     _overallState = newState;
     return true;
   }
+
+  bool isConnectionActive() =>
+      (currentConnectionStateUnsynchronized != null) &&
+      !currentConnectionStateUnsynchronized!.stopping;
 }
 
 class ConnectionState {
   final HubConnection _hubConnection;
   final Logger _logger;
-  bool _hasInherentKeepAlive;
-  Map<String, InvocationRequest> _pendingCalls = <String, InvocationRequest>{};
-  Completer<Object?>? _stopCompleter;
-  bool _stopping;
+  // final bool _hasInherentKeepAlive;
+
+  final Map<String, InvocationRequest> _pendingCalls =
+      <String, InvocationRequest>{};
+  Completer<Object?>? _stopCompleter; // _stopTcs
   int _nextInvocationId;
   int _nextActivationServerTimeout;
-  int _nextActivationSendping;
+  int _nextActivationSendPing;
 
   ConnectionContext _connection;
-  Future<void>? _receiveTask;
+  Future<void>? _receiveFuture;
   Exception? closeException;
-  CancellationToken uploadStreamToken;
+  CancellationToken? uploadStreamToken;
 
-  Future<void>? invocationMessageReceiveTask;
+  Future<void>? invocationMessageReceiveFuture;
 
   ConnectionState(ConnectionContext connection, HubConnection hubConnection)
       : _connection = connection,
         _hubConnection = hubConnection,
-        _logger = hubConnection._logger {}
+        _logger = hubConnection._logger,
+        _nextInvocationId = 0,
+        _nextActivationServerTimeout = 0,
+        _nextActivationSendPing = 0,
+        stopping = false;
 
   ConnectionContext get connection => _connection;
 
-  bool get stopping => _stopping;
-
-  set stopping(bool value) => _stopping = value;
+  bool stopping;
 
   String getNextId() => (_nextInvocationId++).toString();
+
+  void addInvocation(InvocationRequest irq) {
+    if (_pendingCalls.containsKey(irq.invocationId)) {
+      _logger.invocationAlreadyInUse(irq.invocationId);
+      throw Exception(
+          'Invocation ID \'${irq.invocationId}\' is already in use.');
+    } else {
+      _pendingCalls[irq.invocationId] = irq;
+    }
+  }
+
+  InvocationRequest? tryGetInvocation(String invocationId) {
+    if (_pendingCalls.containsKey(invocationId)) {
+      return _pendingCalls[invocationId];
+    }
+
+    return null;
+  }
+
+  InvocationRequest? tryRemoveInvocation(String invocationId) {
+    if (_pendingCalls.containsKey(invocationId)) {
+      final invocationRequest = _pendingCalls[invocationId];
+      _pendingCalls.remove(invocationId);
+      return invocationRequest;
+    }
+
+    return null;
+  }
+
+  void cancelOutstandingInvocations(Exception? exception) {
+    _logger.cancelingOutstandingInvocations();
+
+    for (var outstandingCall in _pendingCalls.values) {
+      _logger.removingInvocation(outstandingCall.invocationId);
+      if (exception != null) {
+        outstandingCall.fail(exception);
+      }
+      outstandingCall.dispose();
+    }
+    _pendingCalls.clear();
+  }
+
+  Future<void> stop() {
+    if (_stopCompleter != null) {
+      return _stopCompleter!.future;
+    } else {
+      _stopCompleter = Completer<Object?>();
+      return _stopCore();
+    }
+  }
+
+  Future<void> _stopCore() async {
+    _logger
+      ..stopping()
+      ..terminatingReceiveLoop();
+
+    await (_receiveFuture ?? Future.value());
+
+    _logger.stopped();
+    _stopCompleter!.complete(null);
+  }
+
+  void resetSendPing() {
+    _nextActivationSendPing =
+        (DateTime.now().toUtc().add(_hubConnection.serverTimeout)).ticks;
+  }
+
+  void resetTimeout() {
+    _nextActivationServerTimeout =
+        (DateTime.now().toUtc().add(_hubConnection.serverTimeout)).ticks;
+  }
+
+  Future<void> _runTimerActions() {
+    // if (_hasInherentKeepAlive) {
+    //return;
+    // }
+
+    if (DateTime.now().toUtc().ticks > _nextActivationServerTimeout) {
+      //onServerTimeout();
+    }
+
+    if (DateTime.now().toUtc().ticks > _nextActivationSendPing) {}
+
+    return Future.value();
+  }
 }

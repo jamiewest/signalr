@@ -1,5 +1,7 @@
 import 'package:http/http.dart';
 
+import '../../common/http_connections_common/http_transport_type.dart';
+import '../../common/http_connections_common/http_transports.dart';
 import '../../common/signalr_common/protocol/transfer_format.dart';
 
 typedef AccessTokenProvider = Future<String?> Function();
@@ -17,7 +19,11 @@ class HttpConnectionOptions {
 
   HttpConnectionOptions({
     this.url,
-    this.transports = 7,
+    this.transports = const <HttpTransportType>[
+      HttpTransportType.longPolling,
+      HttpTransportType.serverSentEvents,
+      HttpTransportType.webSockets,
+    ],
     this.skipNegotiation = false,
     this.accessTokenProvider,
     this.closeTimeout = const Duration(seconds: 5),
@@ -63,7 +69,7 @@ class HttpConnectionOptions {
 
   /// Gets or sets a bitmask combining one or more [HttpTransportType] values
   /// that specify what transports the client should use to send HTTP requests.
-  int? transports;
+  Iterable<HttpTransportType>? transports;
 
   /// Gets or sets a value indicating whether negotiation is skipped when
   /// connecting to the server.

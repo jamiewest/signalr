@@ -1,11 +1,15 @@
 /// Represents the possible transfer formats.
 enum TransferFormat {
   /// A binary transport format.
-  binary,
+  binary('Binary'),
 
   /// A text transport format.
-  text,
+  text('Text'),
   ;
+
+  const TransferFormat(this.name);
+
+  final String name;
 
   static TransferFormat fromName(String? name) {
     switch (name) {
