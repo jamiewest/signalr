@@ -1,3 +1,5 @@
+import 'message_type.dart';
+
 /// Represents the invocation message type.
 const int invocationMessageType = 1;
 
@@ -18,3 +20,24 @@ const int pingMessageType = 6;
 
 /// Represents the close message type.
 const int closeMessageType = 7;
+
+MessageType getMessageTypeByValue(int value) {
+  switch (value) {
+    case 1:
+      return MessageType.invocation;
+    case 2:
+      return MessageType.streamItem;
+    case 3:
+      return MessageType.completion;
+    case 4:
+      return MessageType.streamInvocation;
+    case 5:
+      return MessageType.cancelInvocation;
+    case 6:
+      return MessageType.ping;
+    case 7:
+      return MessageType.close;
+    default:
+      throw Exception('Invalid message type.');
+  }
+}

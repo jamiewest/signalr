@@ -8,10 +8,10 @@ import '../../common/http_connections_common/http_transport_type.dart';
 import '../../common/http_connections_common/uri_end_point.dart';
 import '../../common/signalr_common/protocol/hub_protocol.dart';
 import '../../common/signalr_common/protocol/transfer_format.dart';
+import '../core/hub_connection.dart';
 import '../core/hub_connection_builder.dart';
 import '../core/internal/default_retry_policy.dart';
 import '../core/retry_policy.dart';
-
 import 'http_connection_factory.dart';
 import 'http_connection_options.dart';
 
@@ -35,75 +35,72 @@ extension HubConnectionBuilderExtensions on HubConnectionBuilder {
     return this;
   }
 
-  /// Configures the [HubConnection] to use HTTP-based transports to connect
-  /// to the specified URL and transports.
-  HubConnectionBuilder withUrl(
-    Uri url,
-    Iterable<HttpTransportType>? transports,
-    Function(HttpConnectionOptions options)? configureHttpConnection,
-  ) {
-    services.configure(() => HttpConnectionOptions(), (o) {
-      o.url = url;
-      if (transports != null) {
-        o.transports = transports;
-      }
-    });
+//   /// Configures the [HubConnection] to use HTTP-based transports to connect
+//   /// to the specified URL and transports.
+//   HubConnectionBuilder withUrl(
+//     Uri url,
+//     Iterable<HttpTransportType>? transports,
+//     Function(HttpConnectionOptions options)? configureHttpConnection,
+//   ) {
+//     services.configure(HttpConnectionOptions.new, (o) {
+//       o.url = url;
+//       if (transports != null) {
+//         o.transports = transports;
+//       }
+//     });
 
-    if (configureHttpConnection != null) {
-      //services.configure(configureHttpConnection);
-    }
+//     if (configureHttpConnection != null) {
+//       //services.configure(configureHttpConnection);
+//     }
 
-    // Add HttpConnectionOptionsDerivedHttpEndPoint so HubConnection can
-    // read the Url from HttpConnectionOptions without the Signal.Client.Core
-    // project taking a new dependency on Http.Connections.Client.
-    services.addSingleton<EndPoint>(
-      (services) => HttpConnectionOptionsDerivedHttpEndPoint(
-        httpConnectionOptions:
-            services.getRequiredService<Options<HttpConnectionOptions>>(),
-      ),
-    );
+//     // Add HttpConnectionOptionsDerivedHttpEndPoint so HubConnection can
+//     // read the Url from HttpConnectionOptions without the Signal.Client.Core
+//     // project taking a new dependency on Http.Connections.Client.
+//     services
+//       ..addSingleton<EndPoint>(
+//         (services) => HttpConnectionOptionsDerivedHttpEndPoint(
+//           httpConnectionOptions:
+//               services.getRequiredService<Options<HttpConnectionOptions>>(),
+//         ),
+//       )
+//       ..addSingleton<ConfigureOptions<HttpConnectionOptions>>(
+//         (services) => HubProtocolDerivedHttpOptionsConfigurer(
+//           services.getRequiredService<HubProtocol>(),
+//         ),
+//       )
+//       ..addSingleton<ConnectionFactory>(
+//         (services) => HttpConnectionFactory(
+//           services.getRequiredService<Options<HttpConnectionOptions>>(),
+//           services.getRequiredService<LoggerFactory>(),
+//         ),
+//       );
 
-    // Configure the HttpConnection so that it uses the correct transfer
-    // format for the configured HubProtocol.
-    services.addSingleton<ConfigureOptions<HttpConnectionOptions>>(
-      (services) => HubProtocolDerivedHttpOptionsConfigurer(
-        services.getRequiredService<HubProtocol>(),
-      ),
-    );
+//     return this;
+//   }
+// }
 
-    services.addSingleton<ConnectionFactory>(
-      (services) => HttpConnectionFactory(
-        services.getRequiredService<Options<HttpConnectionOptions>>(),
-        services.getRequiredService<LoggerFactory>(),
-      ),
-    );
+// class HttpConnectionOptionsDerivedHttpEndPoint extends UriEndPoint {
+//   HttpConnectionOptionsDerivedHttpEndPoint({
+//     required Options<HttpConnectionOptions> httpConnectionOptions,
+//   }) : super(
+//           uri: httpConnectionOptions.value!.url!,
+//         );
+// }
 
-    return this;
-  }
-}
+// class HubProtocolDerivedHttpOptionsConfigurer
+//     extends ConfigureNamedOptions<HttpConnectionOptions> {
+//   final TransferFormat _defaultTransferFormat;
 
-class HttpConnectionOptionsDerivedHttpEndPoint extends UriEndPoint {
-  HttpConnectionOptionsDerivedHttpEndPoint({
-    required Options<HttpConnectionOptions> httpConnectionOptions,
-  }) : super(
-          uri: httpConnectionOptions.value!.url!,
-        );
-}
+//   HubProtocolDerivedHttpOptionsConfigurer(HubProtocol hubProtocol)
+//       : _defaultTransferFormat = hubProtocol.transferFormat;
 
-class HubProtocolDerivedHttpOptionsConfigurer
-    extends ConfigureNamedOptions<HttpConnectionOptions> {
-  final TransferFormat _defaultTransferFormat;
+//   @override
+//   void configure(HttpConnectionOptions options) {
+//     options.defaultTransferFormat = _defaultTransferFormat;
+//   }
 
-  HubProtocolDerivedHttpOptionsConfigurer(HubProtocol hubProtocol)
-      : _defaultTransferFormat = hubProtocol.transferFormat;
-
-  @override
-  void configure(HttpConnectionOptions options) {
-    options.defaultTransferFormat = _defaultTransferFormat;
-  }
-
-  @override
-  void configureNamed(String name, HttpConnectionOptions options) {
-    configure(options);
-  }
+//   @override
+//   void configureNamed(String name, HttpConnectionOptions options) {
+//     configure(options);
+//   }
 }

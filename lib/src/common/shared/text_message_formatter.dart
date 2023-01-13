@@ -9,14 +9,13 @@ void writeRecordSeparator(BytesBuilder output) =>
     output.addByte(recordSeparator);
 
 mixin TextMessageFormat {
-  static const RecordSeparatorCode = 0x1e;
+  static const recordSeparatorCode = 0x1e;
 
   static String recordSeparator =
-      String.fromCharCode(TextMessageFormat.RecordSeparatorCode);
+      String.fromCharCode(TextMessageFormat.recordSeparatorCode);
 
-  static String write(String output) {
-    return '$output${TextMessageFormat.recordSeparator}';
-  }
+  static String write(String output) =>
+      '$output${TextMessageFormat.recordSeparator}';
 
   static List<String> parse(String input) {
     if (input.isEmpty) {

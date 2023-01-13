@@ -1,6 +1,5 @@
-import 'package:signalr/src/common/signalr_common/protocol/message_type.dart';
-
 import 'hub_message.dart';
+import 'message_type.dart';
 
 /// The message sent when closing a connection.
 class CloseMessage extends HubMessage {

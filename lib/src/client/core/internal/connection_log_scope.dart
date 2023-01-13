@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:quiver/strings.dart';
 
 class ConnectionLogScope with IterableMixin<MapEntry<String, Object?>> {
-  String _clientConnectionIdKey = "ClientConnectionId";
+  final String _clientConnectionIdKey = 'ClientConnectionId';
   String? _connectionId;
   String? _cachedToString;
 
@@ -46,6 +46,7 @@ class _ConnectionLogScopeIterator
 
   _ConnectionLogScopeIterator(Iterable<MapEntry<String, Object?>> items)
       : _items = items;
+
   @override
   get current => _items.elementAt(index);
 

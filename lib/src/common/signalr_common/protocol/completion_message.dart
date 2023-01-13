@@ -1,6 +1,5 @@
-import 'message_type.dart';
-
 import 'hub_invocation_message.dart';
+import 'message_type.dart';
 
 /// Represents an invocation that has completed. If there is an error
 /// then the invocation didn't complete successfully.

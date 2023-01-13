@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'hub_connection_context.dart';
 
 class HubConnectionStore with MapMixin<String, HubConnectionContext> {
-  Map<String, HubConnectionContext> _connections =
+  final Map<String, HubConnectionContext> _connections =
       <String, HubConnectionContext>{};
 
   @override

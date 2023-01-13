@@ -19,10 +19,9 @@ extension HandshakeRequestMessageExtensions on HandshakeRequestMessage {
         'version': version,
       };
 
-  static HandshakeRequestMessage fromJson(Map<String, dynamic> json) {
-    return HandshakeRequestMessage(
-      protocol: json['protocol'] as String,
-      version: json['version'] as int,
-    );
-  }
+  static HandshakeRequestMessage fromJson(Map<String, dynamic> json) =>
+      HandshakeRequestMessage(
+        protocol: json['protocol'] as String,
+        version: json['version'] as int,
+      );
 }

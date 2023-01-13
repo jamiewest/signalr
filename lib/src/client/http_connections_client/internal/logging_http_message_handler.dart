@@ -8,6 +8,7 @@ class LoggingHttpMessageHandler extends http.BaseClient {
   LoggingHttpMessageHandler(this._inner, LoggerFactory loggerFactory)
       : _logger = loggerFactory.createLogger('LoggingHttpClient');
 
+  @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     _logger.sendingHttpRequest(request.method, request.url);
     final response = await _inner.send(request);
@@ -31,7 +32,7 @@ extension LoggingExtensions on Logger {
   ) {
     logTrace(
       'Sending HTTP request $requestMethod \'$requestUrl\'.',
-      eventId: EventId(1, 'SendingHttpRequest'),
+      eventId: const EventId(1, 'SendingHttpRequest'),
     );
   }
 
@@ -42,7 +43,7 @@ extension LoggingExtensions on Logger {
   ) {
     logWarning(
       'Unsuccessful HTTP response $statusCode return from $requestMethod \'$requestUrl\'.',
-      eventId: EventId(2, 'UnsuccessfulHttpResponse'),
+      eventId: const EventId(2, 'UnsuccessfulHttpResponse'),
     );
   }
 }

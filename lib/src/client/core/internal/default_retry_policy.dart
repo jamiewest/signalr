@@ -6,9 +6,9 @@ class DefaultRetryPolicy implements RetryPolicy {
 
   static List<Duration?> defaultRetryDelaysInMilliseconds = [
     Duration.zero,
-    Duration(seconds: 2),
-    Duration(seconds: 10),
-    Duration(seconds: 30),
+    const Duration(seconds: 2),
+    const Duration(seconds: 10),
+    const Duration(seconds: 30),
     null,
   ];
 

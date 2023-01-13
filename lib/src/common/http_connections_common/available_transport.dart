@@ -1,3 +1,5 @@
+import 'negotiation_response.dart';
+
 /// Part of the [NegotiationResponse] that represents an individual
 /// transport and the trasfer formats the transport supports.
 class AvailableTransport {

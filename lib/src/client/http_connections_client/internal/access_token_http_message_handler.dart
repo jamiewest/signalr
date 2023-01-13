@@ -1,10 +1,10 @@
 import 'package:extensions/hosting.dart';
 import 'package:http/http.dart' as http;
 import 'package:quiver/strings.dart';
-import '../http_connection_logger_extensions.dart';
-import 'http_client_handler.dart';
 
 import '../http_connection.dart';
+import '../http_connection_logger_extensions.dart';
+import 'http_client_handler.dart';
 
 class AccessTokenHttpMessageHandler extends http.BaseClient {
   final http.Client _inner;
@@ -19,6 +19,7 @@ class AccessTokenHttpMessageHandler extends http.BaseClient {
   )   : _httpConnection = httpConnection,
         _logger = loggerFactory.createLogger('HttpConnection');
 
+  @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     var shouldRetry = true;
 

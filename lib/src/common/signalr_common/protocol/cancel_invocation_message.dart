@@ -1,6 +1,5 @@
-import 'message_type.dart';
-
 import 'hub_invocation_message.dart';
+import 'message_type.dart';
 
 /// The [CancelInvocationMessage] represents a cancellation of a
 /// streaming method.

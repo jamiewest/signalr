@@ -1,6 +1,5 @@
-import 'package:signalr/src/common/signalr_common/protocol/message_type.dart';
-
 import 'hub_invocation_message.dart';
+import 'message_type.dart';
 
 /// Represents a single item of an active stream.
 class StreamItemMessage extends HubInvocationMessage {

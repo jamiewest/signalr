@@ -1,6 +1,5 @@
-import 'message_type.dart';
-
 import 'hub_invocation_message.dart';
+import 'message_type.dart';
 
 /// A base class for hub messages representing an invocation.
 abstract class HubMethodInvocationMessage extends HubInvocationMessage {

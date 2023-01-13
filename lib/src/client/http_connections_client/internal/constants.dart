@@ -1,13 +1,13 @@
+import 'package:os_detect/os_detect.dart' as platform;
 import 'package:pub_semver/pub_semver.dart';
-import "package:os_detect/os_detect.dart" as platform;
 import 'package:quiver/strings.dart';
 
 String userAgent = platform.isBrowser ? 'X-SignalR-User-Agent' : 'User-Agent';
 String userAgentHeader = getUserAgentHeader();
 
 String getUserAgentHeader() {
-  final runtime = 'Dart';
-  final runtimeVersion = '';
+  const runtime = 'Dart';
+  const runtimeVersion = '';
 
   return constructUserAgent(
     Version.none,
@@ -59,7 +59,5 @@ String constructUserAgent(
     userAgent += '; Unknown Runtime Version';
   }
 
-  userAgent += ')';
-
-  return userAgent;
+  return userAgent += ')';
 }

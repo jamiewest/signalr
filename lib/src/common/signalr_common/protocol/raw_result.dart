@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 
+import 'completion_message.dart';
+import 'hub_protocol.dart';
+
 /// Type returned to [HubProtocol] implementations to let them know
 /// the object being deserialized should be stored as raw serialized
 /// bytes in the format of the protocol being used.

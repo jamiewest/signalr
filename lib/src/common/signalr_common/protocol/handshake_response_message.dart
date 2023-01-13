@@ -12,7 +12,7 @@ class HandshakeResponseMessage {
 
   /// An empty response message with no error.
   static HandshakeResponseMessage get empty =>
-      HandshakeResponseMessage(error: null);
+      const HandshakeResponseMessage(error: null);
 }
 
 extension HandshakeResponseMessageExtensions on HandshakeResponseMessage {
@@ -20,9 +20,8 @@ extension HandshakeResponseMessageExtensions on HandshakeResponseMessage {
         'error': error ?? '',
       };
 
-  static HandshakeResponseMessage fromJson(Map<String, dynamic> json) {
-    return HandshakeResponseMessage(
-      error: json['error'] as String?,
-    );
-  }
+  static HandshakeResponseMessage fromJson(Map<String, dynamic> json) =>
+      HandshakeResponseMessage(
+        error: json['error'] as String?,
+      );
 }

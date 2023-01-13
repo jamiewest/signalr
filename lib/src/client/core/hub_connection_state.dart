@@ -1,3 +1,5 @@
+import 'hub_connection.dart';
+
 /// Describes the current state of the [HubConnection] to the server.
 enum HubConnectionState {
   /// The hub connection is disconnected.
@@ -18,5 +20,5 @@ enum HubConnectionState {
   );
 
   @override
-  String toString() => this.name;
+  String toString() => name;
 }

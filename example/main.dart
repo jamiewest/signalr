@@ -6,6 +6,9 @@ import 'package:extensions/logging.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_web_socket/shelf_web_socket.dart';
+import 'package:signalr/src/client/core/hub_connection_builder.dart';
+import 'package:signalr/src/client/hub_connection_builder_http_extensions.dart';
+import 'package:signalr/src/common/protocols_json/json_protocol_dependency_injection_extensions.dart';
 import 'package:sse/server/sse_handler.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -15,22 +18,34 @@ import 'package:signalr/src/client/http_connections_client/http_connection_optio
 import 'package:signalr/src/common/http_connections_common/http_transport_type.dart';
 
 Future<void> main() async {
-  final connection = HttpConnection(
-    loggerFactory: LoggerFactory.create(
-      (logging) => logging
+  final hubConnection = HubConnectionBuilder()
+      .addJsonProtocol()
+      .configureLogging((logging) => logging
         ..addDebug()
-        ..setMinimumLevel(LogLevel.trace),
-    ),
-    httpConnectionOptions: HttpConnectionOptions(
-      url: Uri.parse('http://localhost:5115/chatHub'),
-      //skipNegotiation: true,
-      transports: [HttpTransportType.webSockets],
-    ),
-  );
+        ..setMinimumLevel(LogLevel.trace))
+      .withUrl(
+        Uri.parse('http://localhost:5115/chatHub'),
+      )
+      .build();
 
-  await connection.start();
+  await hubConnection.start();
 
-  connection.transport.sink.add(utf8.encode('hahahahha'));
+  // final connection = HttpConnection(
+  //   loggerFactory: LoggerFactory.create(
+  //     (logging) => logging
+  //       ..addDebug()
+  //       ..setMinimumLevel(LogLevel.trace),
+  //   ),
+  //   httpConnectionOptions: HttpConnectionOptions(
+  //     url: Uri.parse('http://localhost:5115/chatHub'),
+  //     //skipNegotiation: true,
+  //     transports: [HttpTransportType.webSockets],
+  //   ),
+  // );
+
+  // await connection.start();
+
+  // connection.transport.sink.add(utf8.encode('hahahahha'));
 }
 
 /*

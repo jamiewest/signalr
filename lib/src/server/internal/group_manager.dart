@@ -1,5 +1,5 @@
 import 'package:extensions/dependency_injection.dart';
-import 'package:signalr/src/server/hub_lifetime_manager.dart';
+import '../hub_lifetime_manager.dart';
 
 /// A manager abstraction for adding and removing connections from groups.
 class GroupManager {

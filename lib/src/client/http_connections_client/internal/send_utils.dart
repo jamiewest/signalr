@@ -1,8 +1,9 @@
 import 'package:chunked_stream/chunked_stream.dart';
 import 'package:extensions/logging.dart';
 import 'package:http/http.dart';
-import 'package:signalr/src/client/http_connections_client/internal/http_client_handler.dart';
 import 'package:stream_channel/stream_channel.dart';
+
+import 'http_client_handler.dart';
 
 Future<void> sendMessages(
   Uri sendUrl,
@@ -39,21 +40,21 @@ extension SendUtilsLoggerExtensions on Logger {
   void sendStarted() {
     logDebug(
       'Starting the send loop.',
-      eventId: EventId(100, 'SendStarted'),
+      eventId: const EventId(100, 'SendStarted'),
     );
   }
 
   void sendCanceled() {
     logDebug(
       'Send loop canceled.',
-      eventId: EventId(102, 'SendCanceled'),
+      eventId: const EventId(102, 'SendCanceled'),
     );
   }
 
   void sendStopped() {
     logDebug(
       'Send loop stopped.',
-      eventId: EventId(101, 'SendStopped'),
+      eventId: const EventId(101, 'SendStopped'),
     );
   }
 
@@ -63,28 +64,28 @@ extension SendUtilsLoggerExtensions on Logger {
   ) {
     logDebug(
       'Sending $count bytes to the server using url: ${url.toString()}.',
-      eventId: EventId(103, 'SendingMessages'),
+      eventId: const EventId(103, 'SendingMessages'),
     );
   }
 
   void sentSuccessfully() {
     logDebug(
       'Message(s) sent successfully.',
-      eventId: EventId(104, 'SentSuccessfully'),
+      eventId: const EventId(104, 'SentSuccessfully'),
     );
   }
 
   void noMessages() {
     logDebug(
       'No messages in batch to send.',
-      eventId: EventId(105, 'NoMessages'),
+      eventId: const EventId(105, 'NoMessages'),
     );
   }
 
   void errorSending(Uri url, Exception exception) {
     logError(
       'Error while sending to \'$url\'.',
-      eventId: EventId(106, 'ErrorSending'),
+      eventId: const EventId(106, 'ErrorSending'),
       exception: exception,
     );
   }

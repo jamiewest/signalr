@@ -118,8 +118,10 @@ class HubConnection implements AsyncDisposable {
             'The HubConnection cannot be started while stop is running.');
       }
 
-      final linkedToken =
-          createLinkedToken(cancellationToken, _state.stopCts.token);
+      final linkedToken = createLinkedToken(
+        cancellationToken,
+        _state.stopCts.token,
+      );
       await _startCore(linkedToken);
 
       _state.changeState(
@@ -128,7 +130,9 @@ class HubConnection implements AsyncDisposable {
       );
     } on Exception {
       if (_state.tryChangeState(
-          HubConnectionState.connecting, HubConnectionState.disconnected)) {
+        HubConnectionState.connecting,
+        HubConnectionState.disconnected,
+      )) {
         _state.stopCts = CancellationTokenSource();
       }
 
@@ -157,8 +161,11 @@ class HubConnection implements AsyncDisposable {
     _logger.starting();
 
     // Start the connection
-    final connection =
-        await _connectionFactory.connect(_endPoint, cancellationToken);
+    final connection = await _connectionFactory.connect(
+      _endPoint,
+      cancellationToken,
+    );
+
     final startingConnectionState = ConnectionState(connection, this);
 
     // From here on, if an error occurs we need to shut down the connection
@@ -267,6 +274,17 @@ class HubConnection implements AsyncDisposable {
     // We've sent a message, so don't ping for a while
     connectionState.resetSendPing();
   }
+}
+
+class InvocationHandler {}
+
+class InvocationHandlerList {
+  final List<InvocationHandler> _invocationHandlers;
+
+  InvocationHandlerList(InvocationHandler handler)
+      : _invocationHandlers = <InvocationHandler>[handler];
+
+  List<InvocationHandler> getHandlers() => _invocationHandlers;
 }
 
 class ReconnectingConnectionState {
