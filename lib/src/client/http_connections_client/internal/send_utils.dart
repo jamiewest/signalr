@@ -1,8 +1,10 @@
-import 'package:chunked_stream/chunked_stream.dart';
+import 'dart:async';
+
 import 'package:extensions/logging.dart';
 import 'package:http/http.dart';
 import 'package:stream_channel/stream_channel.dart';
 
+import '../../../common/shared/base_response_extensions.dart';
 import 'http_client_handler.dart';
 
 Future<void> sendMessages(
@@ -16,15 +18,25 @@ Future<void> sendMessages(
 
   try {
     while (true) {
-      var result = await readByteStream(application.stream);
+      var result = await ByteStream(application.stream).toBytes();
+
       var buffer = result.buffer;
 
       try {
         if (buffer.lengthInBytes > 0) {
           logger.sendingMessages(buffer.lengthInBytes, sendUrl);
 
-          var request = HttpRequestMessage('POST', sendUrl, null);
-          request.bodyBytes = buffer.asUint8List();
+          var request = HttpRequestMessage('POST', sendUrl, null)
+            ..bodyBytes = buffer.asUint8List();
+
+          var streamedResponse = await httpClient.send(request);
+          var response = await Response.fromStream(streamedResponse);
+
+          response.ensureSuccessStatusCode();
+
+          logger.sentSuccessfully();
+
+          await application.sink.done;
         }
       } on Exception catch (ex) {}
     }

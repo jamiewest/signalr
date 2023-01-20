@@ -1,7 +1,6 @@
 import 'package:http/http.dart';
 
 import '../../common/http_connections_common/http_transport_type.dart';
-import '../../common/http_connections_common/http_transports.dart';
 import '../../common/signalr_common/protocol/transfer_format.dart';
 
 typedef AccessTokenProvider = Future<String?> Function();

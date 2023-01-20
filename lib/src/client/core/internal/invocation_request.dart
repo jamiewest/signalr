@@ -106,7 +106,8 @@ class Streaming extends InvocationRequest {
       _logger.receivedUnexpectedComplete(_invocationId);
       _channel.local.sink.close();
       throw Exception(
-        'Server provided a result in a completion response to a streamed invocation.',
+        'Server provided a result in a completion response'
+        ' to a streamed invocation.',
       );
     }
 
@@ -173,8 +174,12 @@ class NonStreaming extends InvocationRequest {
   @override
   Future<bool> streamItem(Object? item) {
     _logger.streamItemOnNonStreamInvocation(_invocationId);
-    _completer.completeError(Exception(
-        'Streaming hub methods must be invoked with the \'HubConnectionExtensions.streamAsChannel\' method.'));
+    _completer.completeError(
+      Exception(
+        'Streaming hub methods must be invoked with the'
+        ' \'HubConnectionExtensions.streamAsChannel\' method.',
+      ),
+    );
 
     // We 'delivered' the stream item successfully as far as the caller cares
     return Future.value(true);
@@ -237,7 +242,8 @@ extension InvocationRequestLoggerExtensions on Logger {
 
   void receivedUnexpectedComplete(String invocationId) {
     logError(
-      'Invocation $invocationId received a completion result, but was invoked as a streaming invocation.',
+      'Invocation $invocationId received a completion result, but was'
+      ' invoked as a streaming invocation.',
       eventId: const EventId(6, 'ReceivedUnexpectedComplete'),
     );
   }
@@ -246,7 +252,8 @@ extension InvocationRequestLoggerExtensions on Logger {
 
   void streamItemOnNonStreamInvocation(String invocationId) {
     logError(
-      'Invocation $invocationId received stream item but was invoked as a non-streamed invocation.',
+      'Invocation $invocationId received stream item but was invoked as'
+      ' a non-streamed invocation.',
       eventId: const EventId(7, 'StreamItemOnNonStreamInvocation'),
     );
   }

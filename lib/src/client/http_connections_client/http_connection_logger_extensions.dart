@@ -71,7 +71,8 @@ extension HttpConnectionLoggerExtensions on Logger {
 
   void errorWithNegotiation(Uri url, Exception exception) {
     logError(
-      'Failed to start connection. Error getting negotiation response from \'$url\'.',
+      'Failed to start connection. Error getting negotiation response'
+      ' from \'$url\'.',
       eventId: const EventId(10, 'ErrorWithNegotiation'),
       exception: exception,
     );
@@ -82,7 +83,8 @@ extension HttpConnectionLoggerExtensions on Logger {
     Exception exception,
   ) {
     logError(
-      'Failed to start connection. Error starting transport \'${transportType.name}\'.',
+      'Failed to start connection. Error starting transport'
+      ' \'${transportType.name}\'.',
       eventId: const EventId(11, 'ErrorStartingTransport'),
       exception: exception,
     );
@@ -90,7 +92,8 @@ extension HttpConnectionLoggerExtensions on Logger {
 
   void transportNotSupported(String transportName) {
     logDebug(
-      'Skipping transport $transportName because it is not supported by this client.',
+      'Skipping transport $transportName because it is not supported by'
+      ' this client.',
       eventId: const EventId(12, 'TransportNotSupported'),
     );
   }
@@ -101,7 +104,8 @@ extension HttpConnectionLoggerExtensions on Logger {
   ) {
     if (isEnabled(LogLevel.debug)) {
       logDebug(
-        'Skipping transport ${transport.name} because it does not support the requested transfer format \'${transferFormat.toString()}\'.',
+        'Skipping transport ${transport.name} because it does not support'
+        ' the requested transfer format \'${transferFormat.toString()}\'.',
         eventId: const EventId(13, 'TransportDoesNotSupportTransferFormat'),
       );
     }
@@ -110,7 +114,8 @@ extension HttpConnectionLoggerExtensions on Logger {
   void transportDisabledByClient(HttpTransportType transport) {
     if (isEnabled(LogLevel.debug)) {
       logDebug(
-        'Skipping transport ${transport.name} because it was disabled by the client.',
+        'Skipping transport ${transport.name} because it was disabled'
+        ' by the client.',
         eventId: const EventId(14, 'TransportDisabledByClient'),
       );
     }
@@ -131,7 +136,8 @@ extension HttpConnectionLoggerExtensions on Logger {
 
   void webSocketsNotSupportedByOperatingSystem() {
     logDebug(
-      'Skipping WebSockets because they are not supported by the operating system.',
+      'Skipping WebSockets because they are not supported by the'
+      ' operating system.',
       eventId: const EventId(16, 'WebSocketsNotSupportedByOperatingSystem'),
     );
   }
@@ -153,7 +159,8 @@ extension HttpConnectionLoggerExtensions on Logger {
 
   void serverSentEventsNotSupportedByBrowser() {
     logDebug(
-      'Skipping ServerSentEvents because they are not supported by the browser.',
+      'Skipping ServerSentEvents because they are not supported by the'
+      ' browser.',
       eventId: const EventId(19, 'ServerSentEventsNotSupportedByBrowser'),
     );
   }

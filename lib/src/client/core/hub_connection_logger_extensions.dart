@@ -11,7 +11,8 @@ extension HubConnectionLoggerExtensions on Logger {
     int argumentCount,
   ) {
     logTrace(
-      'Preparing non-blocking invocation of \'$target\', with $argumentCount argument(s).',
+      'Preparing non-blocking invocation of \'$target\', with $argumentCount'
+      ' argument(s).',
       eventId: const EventId(1, 'PreparingNonBlockingInvocation'),
     );
   }
@@ -23,7 +24,8 @@ extension HubConnectionLoggerExtensions on Logger {
     int argumentCount,
   ) {
     logTrace(
-      'Preparing blocking invocation \'$invocationId\' of \'$target\', with return type \'$returnType\' and $argumentCount argument(s).',
+      'Preparing blocking invocation \'$invocationId\' of \'$target\', with'
+      ' return type \'$returnType\' and $argumentCount argument(s).',
       eventId: const EventId(2, 'PreparingBlockingInvocation'),
     );
   }
@@ -47,7 +49,8 @@ extension HubConnectionLoggerExtensions on Logger {
         ? ''
         : args.map((a) => a?.runtimeType.toString()).join(', ');
     logTrace(
-      'Issuing Invocation \'$invocationId\': $returnType $methodName($argsList).',
+      'Issuing Invocation \'$invocationId\': $returnType'
+      ' $methodName($argsList).',
       eventId: const EventId(4, 'IssuingInvocation'),
     );
   }
@@ -135,14 +138,16 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void droppedCompletionMessage(String invocationId) {
     logWarning(
-      'Dropped unsolicited Completion message for invocation \'$invocationId\'.',
+      'Dropped unsolicited Completion message for invocation'
+      ' \'$invocationId\'.',
       eventId: const EventId(9, 'DroppedCompletionMessage'),
     );
   }
 
   void droppedStreamMessage(String invocationId) {
     logWarning(
-      'Dropped unsolicited StreamItem message for invocation \'$invocationId\'.',
+      'Dropped unsolicited StreamItem message for invocation'
+      ' \'$invocationId\'.',
       eventId: const EventId(10, 'DroppedStreamMessage'),
     );
   }
@@ -154,11 +159,11 @@ extension HubConnectionLoggerExtensions on Logger {
     );
   }
 
-  void shutdownWithError() {
-    final message = 'Connection is shutting down due to an error.';
+  void shutdownWithError(Exception exception) {
+    const message = 'Connection is shutting down due to an error.';
     logError(
       message,
-      exception: Exception(message),
+      exception: exception,
       eventId: const EventId(12, 'ShutdownWithError'),
     );
   }
@@ -186,14 +191,16 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void cancelingStreamItem(String invocationId) {
     logTrace(
-      'Canceling dispatch of StreamItem message for Invocation $invocationId. The invocation was canceled.',
+      'Canceling dispatch of StreamItem message for Invocation $invocationId.'
+      ' The invocation was canceled.',
       eventId: const EventId(16, 'CancelingStreamItem'),
     );
   }
 
   void receivedStreamItemAfterClose(String invocationId) {
     logWarning(
-      'Invocation {InvocationId} received stream item after channel was closed.',
+      'Invocation {InvocationId} received stream item after'
+      ' channel was closed.',
       eventId: const EventId(17, 'ReceivedStreamItemAfterClose'),
     );
   }
@@ -207,7 +214,8 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void cancelingInvocationCompletion(String invocationId) {
     logTrace(
-      'Canceling dispatch of Completion message for Invocation $invocationId. The invocation was canceled.',
+      'Canceling dispatch of Completion message for Invocation $invocationId.'
+      ' The invocation was canceled.',
       eventId: const EventId(19, 'CancelingInvocationCompletion'),
     );
   }
@@ -292,7 +300,8 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void errorReceivingHandshakeResponse(Exception exception) {
     logError(
-      'The underlying connection closed while processing the handshake response. See exception for details.',
+      'The underlying connection closed while processing the handshake'
+      ' response. See exception for details.',
       eventId: const EventId(35, 'ErrorReceivingHandshakeResponse'),
       exception: exception,
     );
@@ -388,7 +397,8 @@ extension HubConnectionLoggerExtensions on Logger {
   void startingServerTimeoutTimer(Duration serverTimeout) {
     if (isEnabled(LogLevel.debug)) {
       logDebug(
-        'Starting server timeout timer. Duration: ${serverTimeout.inMilliseconds.toStringAsFixed(2)}ms',
+        'Starting server timeout timer. Duration:'
+        ' ${serverTimeout.inMilliseconds.toStringAsFixed(2)}ms',
         eventId: const EventId(48, 'StartingServerTimeoutTimer'),
       );
     }
@@ -396,7 +406,8 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void notUsingServerTimeout() {
     logDebug(
-      'Not using server timeout because the transport inherently tracks server availability.',
+      'Not using server timeout because the transport inherently tracks'
+      ' server availability.',
       eventId: const EventId(49, 'NotUsingServerTimeout'),
     );
   }
@@ -446,7 +457,8 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void unableToSendCancellation(String invocationId) {
     logTrace(
-      'Unable to send cancellation for invocation \'$invocationId\'. The connection is inactive.',
+      'Unable to send cancellation for invocation \'$invocationId\'. The'
+      ' connection is inactive.',
       eventId: const EventId(55, 'UnableToSendCancellation'),
     );
   }
@@ -485,13 +497,15 @@ extension HubConnectionLoggerExtensions on Logger {
     HubConnectionState actualState,
   ) {
     logError(
-      'The HubConnection failed to transition from the $expectedState state to the $newState state because it was actually in the $actualState state.',
+      'The HubConnection failed to transition from the $expectedState state'
+      ' to the $newState state because it was actually in the'
+      ' $actualState state.',
       eventId: const EventId(67, 'StateTransitionFailed'),
       exception: Exception(),
     );
   }
 
-  void reconnecting(String streamId) {
+  void reconnecting() {
     logInformation(
       'HubConnection reconnecting.',
       eventId: const EventId(68, 'Reconnecting'),
@@ -507,14 +521,16 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void reconnected(int reconnectAttempts, Duration elapsedTime) {
     logInformation(
-      'HubConnection reconnected successfully after $reconnectAttempts attempts and $elapsedTime elapsed.',
+      'HubConnection reconnected successfully after $reconnectAttempts'
+      ' attempts and $elapsedTime elapsed.',
       eventId: const EventId(70, 'Reconnected'),
     );
   }
 
   void reconnectAttemptsExhausted(int reconnectAttempts, Duration elapsedTime) {
     logInformation(
-      'Reconnect retries have been exhausted after $reconnectAttempts failed attempts and $elapsedTime elapsed. Disconnecting.',
+      'Reconnect retries have been exhausted after $reconnectAttempts failed'
+      ' attempts and $elapsedTime elapsed. Disconnecting.',
       eventId: const EventId(71, 'ReconnectAttemptsExhausted'),
     );
   }
@@ -560,7 +576,8 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void firstReconnectRetryDelayNull() {
     logWarning(
-      'Connection not reconnecting because the RetryPolicy returned null on the first reconnect attempt.',
+      'Connection not reconnecting because the RetryPolicy returned null on'
+      ' the first reconnect attempt.',
       eventId: const EventId(77, 'FirstReconnectRetryDelayNull'),
     );
   }
@@ -584,7 +601,8 @@ extension HubConnectionLoggerExtensions on Logger {
     HubConnectionState newState,
   ) {
     logTrace(
-      'The HubConnection is attempting to transition from the $expectedState state to the $newState state.',
+      'The HubConnection is attempting to transition from the $expectedState'
+      ' state to the $newState state.',
       eventId: const EventId(80, 'AttemptingStateTransition'),
     );
   }
@@ -626,21 +644,24 @@ extension HubConnectionLoggerExtensions on Logger {
 
   void missingResultHandler(String target) {
     logWarning(
-      'Failed to find a value returning handler for \'$target}\' method. Sending error to server.',
+      'Failed to find a value returning handler for \'$target}\' method.'
+      ' Sending error to server.',
       eventId: const EventId(85, 'MissingResultHandler'),
     );
   }
 
   void resultNotExpected(String target) {
     logWarning(
-      'Result given for \'$target\' method but server is not expecting a result.',
+      'Result given for \'$target\' method but server is not expecting a'
+      ' result.',
       eventId: const EventId(86, 'ResultNotExpected'),
     );
   }
 
   void completingStreamNotSent(String streamId) {
     logTrace(
-      'Completion message for stream \'$streamId\' was not sent because the connection is closed.',
+      'Completion message for stream \'$streamId\' was not sent because the'
+      ' connection is closed.',
       eventId: const EventId(87, 'CompletingStreamNotSent'),
     );
   }
@@ -650,7 +671,8 @@ extension HubConnectionLoggerExtensions on Logger {
     String target,
   ) {
     logWarning(
-      'Error returning result for invocation \'$invocationId\' for method \'$target\' because the underlying connection is closed.',
+      'Error returning result for invocation \'$invocationId\' for method'
+      ' \'$target\' because the underlying connection is closed.',
       eventId: const EventId(88, 'ErrorSendingInvocationResult'),
     );
   }

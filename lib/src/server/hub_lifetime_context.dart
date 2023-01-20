@@ -3,8 +3,8 @@ import 'package:extensions/dependency_injection.dart';
 import 'hub.dart';
 import 'hub_caller_context.dart';
 
-/// Context for the hub lifetime events [Hub.onConnectedAsync]
-/// and [Hub.onDisconnectedAsync].
+/// Context for the hub lifetime events [Hub.onConnected]
+/// and [Hub.onDisconnected].
 class HubLifetimeContext {
   /// Instantiates a new instance of the [HubLifetimeContext] class.
   const HubLifetimeContext(

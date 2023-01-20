@@ -42,7 +42,8 @@ extension LoggingExtensions on Logger {
     Uri requestUrl,
   ) {
     logWarning(
-      'Unsuccessful HTTP response $statusCode return from $requestMethod \'$requestUrl\'.',
+      'Unsuccessful HTTP response $statusCode return from $requestMethod'
+      ' \'$requestUrl\'.',
       eventId: const EventId(2, 'UnsuccessfulHttpResponse'),
     );
   }

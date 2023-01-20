@@ -35,7 +35,8 @@ class HubConnectionBuilder implements SignalRBuilder {
   HubConnection build() {
     if (_hubConnectionBuilt) {
       throw Exception(
-        'HubConnectionBuilder allows creation only of a single instance of HubConnection.',
+        'HubConnectionBuilder allows creation only of a single instance'
+        ' of HubConnection.',
       );
     }
     _hubConnectionBuilt = true;
@@ -46,7 +47,8 @@ class HubConnectionBuilder implements SignalRBuilder {
     final connectionFactory = serviceProvider.getService<ConnectionFactory>();
     if (connectionFactory == null) {
       throw Exception(
-        'Cannot create HubConnection instance. An ConnectionFactory was not configured.',
+        'Cannot create HubConnection instance. An ConnectionFactory'
+        ' was not configured.',
       );
     }
 

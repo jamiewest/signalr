@@ -1,7 +1,6 @@
-import 'package:signalr/src/server/hub_lifetime_manager.dart';
-
-import 'internal/group_manager.dart';
 import 'hub_clients.dart';
+import 'hub_lifetime_manager.dart';
+import 'internal/group_manager.dart';
 
 /// A context abstraction for a hub.
 class HubContext {

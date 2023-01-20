@@ -10,6 +10,7 @@ class CompletionMessage extends HubInvocationMessage {
     this.error,
     this.result,
     this.hasResult = false,
+    super.headers,
   }) : super(type: MessageType.completion) {
     if (error != null && hasResult) {
       throw Exception(
@@ -70,6 +71,7 @@ class CompletionMessage extends HubInvocationMessage {
   String toString() {
     final errorStr = error == null ? '<<null>>' : '\'$error\'';
     final resultField = hasResult ? ', Result: ${result ?? '<<null>>'}' : '';
-    return 'Completion {{ InvocationId: \'$invocationId\', Error: $errorStr$resultField }}';
+    return 'Completion {{ InvocationId: \'$invocationId\', Error:'
+        ' $errorStr$resultField }}';
   }
 }

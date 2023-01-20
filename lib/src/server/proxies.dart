@@ -1,6 +1,6 @@
-import 'package:extensions/src/primitives/cancellation_token.dart';
-import 'package:signalr/src/server/client_proxy.dart';
-import 'package:signalr/src/server/hub_lifetime_manager.dart';
+import 'package:extensions/primitives.dart';
+import 'client_proxy.dart';
+import 'hub_lifetime_manager.dart';
 
 class UserProxy implements ClientProxy {
   final String _userId;

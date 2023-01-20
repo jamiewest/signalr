@@ -1,6 +1,6 @@
 import 'package:extensions/logging.dart';
-import 'package:signalr/src/common/signalr_common/protocol/hub_protocol.dart';
-import 'package:signalr/src/server/hub_protocol_resolver.dart';
+import '../../common/signalr_common/protocol/hub_protocol.dart';
+import '../hub_protocol_resolver.dart';
 
 class DefaultHubProtocolResolver implements HubProtocolResolver {
   final Logger _logger;
@@ -13,12 +13,12 @@ class DefaultHubProtocolResolver implements HubProtocolResolver {
   )   : _logger = logger,
         _hubProtocols = availableProtocols,
         _availableProtocols = {for (var v in availableProtocols) v.name: v} {
-    availableProtocols.forEach(
-      (e) => _logger.registeredSignalRProtocol(
-        e.name,
-        e.runtimeType,
-      ),
-    );
+    for (var protocol in availableProtocols) {
+      _logger.registeredSignalRProtocol(
+        protocol.name,
+        protocol.runtimeType,
+      );
+    }
   }
 
   @override
@@ -49,8 +49,9 @@ extension DefaultHubProtocolResolverLoggerExtensions on Logger {
     Type implementationType,
   ) {
     logDebug(
-      'Registered SignalR Protocol: $protocolName, implemented by $implementationType.',
-      eventId: EventId(1, 'RegisteredSignalRProtocol'),
+      'Registered SignalR Protocol: $protocolName, implemented by'
+      ' $implementationType.',
+      eventId: const EventId(1, 'RegisteredSignalRProtocol'),
     );
   }
 
@@ -59,7 +60,7 @@ extension DefaultHubProtocolResolverLoggerExtensions on Logger {
   ) {
     logDebug(
       'Found protocol implementation for requested protocol: $protocolName.',
-      eventId: EventId(2, 'FoundImplementationForProtocol'),
+      eventId: const EventId(2, 'FoundImplementationForProtocol'),
     );
   }
 }

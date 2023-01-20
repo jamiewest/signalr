@@ -14,7 +14,7 @@ class RetryContext {
   int previousRetryCount;
 
   /// The amount of time spent retrying so far.
-  DateTime elapsedTime;
+  Duration elapsedTime;
 
   /// The error precipitating the current retry if any.
   Exception? retryReason;

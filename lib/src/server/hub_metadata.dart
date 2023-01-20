@@ -1,3 +1,5 @@
+import 'hub.dart';
+
 /// Metadata that describes the [Hub] information associated with
 /// a specific endpoint.
 class HubMetadata {

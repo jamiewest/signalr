@@ -81,7 +81,8 @@ class HttpConnection implements ConnectionContext {
     _checkDisposed();
     if (_transport == null) {
       throw Exception(
-        'Cannot access the ${_transport.toString()} channel before the connection has started',
+        'Cannot access the ${_transport.toString()} channel before the'
+        ' connection has started',
       );
     }
     return _transport!;
@@ -142,7 +143,8 @@ class HttpConnection implements ConnectionContext {
         );
       } else {
         throw Exception(
-          'Negotiation can only be skipped when using the WebSocket transport directly.',
+          'Negotiation can only be skipped when using the WebSocket'
+          ' transport directly.',
         );
       }
     } else {
@@ -216,8 +218,8 @@ class HttpConnection implements ConnectionContext {
             transportExceptions.add(
               TransportFailedException(
                 transportType: transportType.name,
-                message:
-                    'The transport does not support the \'${transferFormat.toString()}\' transfer format.',
+                message: 'The transport does not support the'
+                    ' \'${transferFormat.toString()}\' transfer format.',
               ),
             );
           } else {
@@ -260,9 +262,11 @@ class HttpConnection implements ConnectionContext {
 
     if (_transport == null) {
       if (transportExceptions.isNotEmpty) {
-        // throw new AggregateException("Unable to connect to the server with any of the available transports.", transportExceptions);
+        // throw new AggregateException("Unable to connect to the server
+        // with any of the available transports.", transportExceptions);
       } else {
-        // throw new NoTransportSupportedException("None of the transports supported by the client are supported by the server.");
+        // throw new NoTransportSupportedException("None of the transports
+        // supported by the client are supported by the server.");
       }
     }
   }
@@ -332,6 +336,9 @@ class HttpConnection implements ConnectionContext {
   ) async {
     // Construct the transport
     final transport = _transportFactory.createTransport(transportType);
+    final resultTransport = HttpTransportType.fromName(
+      transport.runtimeType.toString(),
+    );
 
     try {
       await transport.start(
@@ -340,7 +347,7 @@ class HttpConnection implements ConnectionContext {
         cancellationToken: cancellationToken,
       );
     } on Exception catch (ex) {
-      _logger.errorStartingTransport(HttpTransportType.webSockets, ex);
+      _logger.errorStartingTransport(resultTransport, ex);
 
       _transport = null;
       rethrow;
@@ -353,7 +360,7 @@ class HttpConnection implements ConnectionContext {
     // (we don't want to set these until the transport is definitely running).
     _transport = transport;
 
-    _logger.transportStarted(HttpTransportType.webSockets);
+    _logger.transportStarted(resultTransport);
   }
 
   BaseClient _createHttpClient() {

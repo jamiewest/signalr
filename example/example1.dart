@@ -67,7 +67,8 @@ class _JsonDocument
           //   // All optional values, no need to validate
           //   break;
           default:
-            // Future protocol changes can add message types, old clients can ignore them
+            // Future protocol changes can add message types, old clients can
+            //ignore them
             // logging!(
             //     LogLevel.information,
             //     'Unknown message type \'' +

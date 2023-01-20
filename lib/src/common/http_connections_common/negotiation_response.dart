@@ -12,18 +12,17 @@ class NegotiationResponse {
     this.error,
   });
 
-  factory NegotiationResponse.fromJson(Map<String, dynamic> json) {
-    return NegotiationResponse(
-      connectionId: json['connectionId'] as String?,
-      connectionToken: json['connectionToken'] as String?,
-      version: json['negotiateVersion'] as int,
-      availableTransports:
-          _listFromJson(json['availableTransports'] as List<dynamic>?),
-      url: json['url'] as String?,
-      accessToken: json['accessToken'] as String?,
-      error: json['error'] as String?,
-    );
-  }
+  factory NegotiationResponse.fromJson(Map<String, dynamic> json) =>
+      NegotiationResponse(
+        connectionId: json['connectionId'] as String?,
+        connectionToken: json['connectionToken'] as String?,
+        version: json['negotiateVersion'] as int,
+        availableTransports:
+            _listFromJson(json['availableTransports'] as List<dynamic>?),
+        url: json['url'] as String?,
+        accessToken: json['accessToken'] as String?,
+        error: json['error'] as String?,
+      );
 
   /// An optional Url to redirect the client to another endpoint.
   String? url;
@@ -49,18 +48,14 @@ class NegotiationResponse {
   String? error;
 }
 
-AvailableTransport _fromJson(Map<String, dynamic> json) {
-  return AvailableTransport(
-    transport: json['transport'] as String?,
-    transferFormats:
-        List<dynamic>.from(json['transferFormats'] as Iterable<dynamic>)
-            .map((value) => value as String)
-            .toList(),
-  );
-}
+AvailableTransport _fromJson(Map<String, dynamic> json) => AvailableTransport(
+      transport: json['transport'] as String?,
+      transferFormats:
+          List<dynamic>.from(json['transferFormats'] as Iterable<dynamic>)
+              .map((value) => value as String)
+              .toList(),
+    );
 
-List<AvailableTransport>? _listFromJson(List<dynamic>? json) {
-  return json == null
-      ? <AvailableTransport>[]
-      : json.map((value) => _fromJson(value as Map<String, dynamic>)).toList();
-}
+List<AvailableTransport>? _listFromJson(List<dynamic>? json) => json == null
+    ? <AvailableTransport>[]
+    : json.map((value) => _fromJson(value as Map<String, dynamic>)).toList();

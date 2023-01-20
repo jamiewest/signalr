@@ -56,7 +56,9 @@ class WebSocketTransport extends Transport {
       throw Exception('Unable to get channel');
     }
 
-    _channel!.cast<List<int>>().stream.listen(_controller.add);
+    _channel!.stream.listen((e) => print(e));
+
+    //_channel!.cast<List<int>>().stream.listen(_controller.add);
   }
 
   @override

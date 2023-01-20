@@ -7,12 +7,13 @@ class StreamItemMessage extends HubInvocationMessage {
   StreamItemMessage({
     required super.invocationId,
     this.item,
+    super.headers,
   }) : super(type: MessageType.streamItem);
 
   /// The single item from a stream.
   final Object? item;
 
   @override
-  String toString() =>
-      'StreamItem {{ InvocationId: \'$invocationId\', Item: ${item ?? '<<null>>'} }}';
+  String toString() => 'StreamItem {{ InvocationId: \'$invocationId\', Item:'
+      ' ${item ?? '<<null>>'} }}';
 }

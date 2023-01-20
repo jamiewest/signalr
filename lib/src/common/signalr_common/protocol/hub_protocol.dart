@@ -14,7 +14,7 @@ abstract class HubProtocol {
   TransferFormat get transferFormat;
 
   /// Creates a new [HubMessage] from the specified serialized representation.
-  HubMessage? parseMessage(List<int> input);
+  List<HubMessage> parseMessage(List<int> input);
 
   /// Returns the specified [HubMessage] as a serialized representation.
   List<int> writeMessage(HubMessage message);

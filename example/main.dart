@@ -24,9 +24,11 @@ Future<void> main() async {
         ..addDebug()
         ..setMinimumLevel(LogLevel.trace))
       .withUrl(
-        Uri.parse('http://localhost:5115/chatHub'),
-      )
-      .build();
+    Uri.parse('http://127.0.0.1:5115/chatHub'),
+    transports: [
+      HttpTransportType.longPolling,
+    ],
+  ).build();
 
   await hubConnection.start();
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:extensions/hosting.dart';
 
 import '../../common/http_connections/connection_context.dart';
@@ -7,20 +8,24 @@ import '../../common/http_connections/connection_factory.dart';
 import '../../common/http_connections_common/end_point.dart';
 import '../../common/shared/create_linked_token.dart';
 import '../../common/shared/date_time_extensions.dart';
+import '../../common/signalr_common/protocol/close_message.dart';
 import '../../common/signalr_common/protocol/handshake_protocol.dart';
 import '../../common/signalr_common/protocol/handshake_request_message.dart';
+import '../../common/signalr_common/protocol/hub_invocation_message.dart';
 import '../../common/signalr_common/protocol/hub_message.dart';
 import '../../common/signalr_common/protocol/hub_protocol.dart';
 
+import '../../common/signalr_common/protocol/message_type.dart';
 import 'hub_connection_builder.dart';
 import 'hub_connection_logger_extensions.dart';
 import 'hub_connection_state.dart';
 import 'internal/invocation_request.dart';
+import 'retry_context.dart';
 import 'retry_policy.dart';
 
-typedef ClosedCallback = void Function(Exception? exception);
-typedef ReconnectingCallback = void Function(Exception? exception);
-typedef ReconnectedCallback = void Function(String? connectionId);
+typedef ClosedCallback = Future<void>? Function(Exception? exception);
+typedef ReconnectingCallback = Future<void>? Function(Exception? exception);
+typedef ReconnectedCallback = Future<void>? Function(String? connectionId);
 
 /// A connection used to invoke hub methods on a SignalR Server.
 ///
@@ -61,6 +66,18 @@ class HubConnection implements AsyncDisposable {
 
   bool _disposed = false;
 
+  /// Occurs when the connection is closed. The connection could be closed
+  /// due to an error or due to either the server or client intentionally.
+  ClosedCallback? closed;
+
+  /// Occurs when the [HubConnection] starts reconnecting after losing its
+  /// underlying connection.
+  ReconnectingCallback? reconnecting;
+
+  /// Occurs when the [HubConnection] successfully reconnects after losing
+  /// its underlying connection.
+  ReconnectedCallback? reconnected;
+
   /// Gets or sets the server timeout interval for the connection.
   ///
   /// /// The client times out if it hasn't heard from the server for
@@ -74,6 +91,15 @@ class HubConnection implements AsyncDisposable {
 
   /// Gets or sets the timeout for the initial handshake.
   Duration handshakeTimeout = defaultHandshakeTimeout;
+
+  /// Gets the connection's current Id. This value will be cleared when
+  /// the connection is stopped and will have a new value every time the
+  /// connection is (re)established.
+  String? get connectionId =>
+      _state.currentConnectionStateUnsynchronized?.connection.connectionId;
+
+  /// Indicates the state of the [HubConnection] to the server.
+  HubConnectionState get state => _state.overallState;
 
   /// Initializes a new instance of the [HubConnection] class.
   HubConnection({
@@ -106,7 +132,9 @@ class HubConnection implements AsyncDisposable {
         HubConnectionState.connecting,
       )) {
         throw Exception(
-            'The HubConnection cannot be started if it is not in the HubConnectionState.disconnected state.');
+          'The HubConnection cannot be started if it is not in the'
+          ' HubConnectionState.disconnected state.',
+        );
       }
 
       // The StopCts is canceled at the start of StopAsync should be reset
@@ -168,11 +196,19 @@ class HubConnection implements AsyncDisposable {
 
     final startingConnectionState = ConnectionState(connection, this);
 
+    startingConnectionState.connection.transport?.stream.listen((data) {
+      final messages = _protocol.parseMessage(data);
+      for (var message in messages) {
+        print(message.toString());
+        //_processMessage(message, connectionState);
+      }
+    });
+
     // From here on, if an error occurs we need to shut down the connection
     // because we still own it.
     try {
       _logger.hubProtocol(_protocol.name, _protocol.version);
-      await handshake(startingConnectionState, cancellationToken);
+      handshake(startingConnectionState, cancellationToken);
     } on Exception catch (ex) {
       _logger.errorStartingConnection(ex);
 
@@ -181,11 +217,248 @@ class HubConnection implements AsyncDisposable {
       rethrow;
     }
 
-    _logger.started();
+    _state.currentConnectionStateUnsynchronized = startingConnectionState;
 
-    throw UnimplementedError();
+    startingConnectionState._receiveFuture =
+        receiveLoop(startingConnectionState);
+
+    _logger.started();
   }
 
+  Future<void> handleConnectionClose(ConnectionState connectionState) async {
+    _state.currentConnectionStateUnsynchronized = null;
+
+    //await close(connectionState.connection);
+
+    connectionState
+        .cancelOutstandingInvocations(connectionState.closeException);
+
+    if (connectionState.stopping || _reconnectPolicy == null) {
+      if (connectionState.closeException != null) {
+        _logger.shutdownWithError(connectionState.closeException!);
+      } else {
+        _logger.shutdownConnection();
+      }
+
+      _state.changeState(
+        HubConnectionState.connected,
+        HubConnectionState.disconnected,
+      );
+      _completeClose(connectionState.closeException);
+    } else {
+      _state.reconnectFuture = _reconnect(connectionState.closeException);
+    }
+  }
+
+  void _completeClose(Exception? exception) {
+    _state.stopCts = CancellationTokenSource();
+    _runCloseEvent(exception);
+  }
+
+  void _runCloseEvent(Exception? closeException) {}
+
+  Future<void> _reconnect(Exception? closeException) async {
+    var previousReconnectAttempts = 0;
+    var reconnectStartTime = DateTime.now().toUtc();
+    var retryReason = closeException;
+    var nextRetryDelay = _getNextRetryDelay(
+      previousReconnectAttempts,
+      Duration.zero,
+      retryReason,
+    );
+
+    if (nextRetryDelay == null) {
+      _logger.firstReconnectRetryDelayNull();
+
+      _state.changeState(
+        HubConnectionState.connected,
+        HubConnectionState.disconnected,
+      );
+
+      _completeClose(closeException);
+      return;
+    }
+
+    _state.changeState(
+      HubConnectionState.connected,
+      HubConnectionState.reconnecting,
+    );
+
+    if (closeException != null) {
+      _logger.reconnectingWithError(closeException);
+    } else {
+      _logger.reconnecting();
+    }
+
+    //_runReconnectingEvent(closeException);
+    while (nextRetryDelay != null) {
+      _logger.awaitingReconnectRetryDelay(
+        previousReconnectAttempts + 1,
+        nextRetryDelay,
+      );
+
+      var retryDelay = CancelableOperation.fromFuture(
+        Future<void>.delayed(nextRetryDelay),
+        onCancel: () {
+          _logger.reconnectingStoppedDuringRetryDelay();
+
+          _state.changeState(
+            HubConnectionState.reconnecting,
+            HubConnectionState.disconnected,
+          );
+
+          _completeClose(
+            Exception(
+              'Connection stopped during reconnect delay. Done reconnecting.',
+            ),
+          );
+
+          return;
+        },
+      );
+
+      _state.stopCts.token.register((state) {
+        retryDelay.cancel();
+      });
+
+      await retryDelay.value;
+
+      try {
+        await _startCore(_state.stopCts.token);
+
+        _logger.reconnected(
+          previousReconnectAttempts,
+          DateTime.now().toUtc().difference(reconnectStartTime),
+        );
+
+        _state.changeState(
+          HubConnectionState.reconnecting,
+          HubConnectionState.connected,
+        );
+      } on Exception catch (ex) {
+        retryReason = ex;
+
+        _logger.reconnectAttemptFailed(ex);
+
+        if (_state.stopCts.isCancellationRequested) {
+          _logger.reconnectingStoppedDuringReconnectAttempt();
+
+          _state.changeState(
+            HubConnectionState.reconnecting,
+            HubConnectionState.disconnected,
+          );
+
+          _completeClose(
+            Exception(
+              'Connection stopped during reconnect attempt. Done reconnecting.',
+            ),
+          );
+
+          return;
+        }
+
+        previousReconnectAttempts++;
+      }
+
+      nextRetryDelay = _getNextRetryDelay(
+        previousReconnectAttempts,
+        DateTime.now().toUtc().difference(reconnectStartTime),
+        retryReason,
+      );
+    }
+
+    var elapsedTime = DateTime.now().toUtc().difference(reconnectStartTime);
+    _logger.reconnectAttemptsExhausted(
+      previousReconnectAttempts,
+      elapsedTime,
+    );
+
+    _state.changeState(
+      HubConnectionState.reconnecting,
+      HubConnectionState.disconnected,
+    );
+
+    var message =
+        'Reconnect retries have been exhausted after $previousReconnectAttempts'
+        ' failed attempts and $elapsedTime elapsed. Disconnecting.';
+
+    _completeClose(Exception(message));
+  }
+
+  Duration? _getNextRetryDelay(
+    int previousRetryCount,
+    Duration elapsedTime,
+    Exception? retryReason,
+  ) {
+    try {
+      return _reconnectPolicy!.nextRetryDelay(
+        RetryContext(
+          previousRetryCount: previousRetryCount,
+          elapsedTime: elapsedTime,
+          retryReason: retryReason,
+        ),
+      );
+    } on Exception catch (ex) {
+      _logger.errorDuringNextRetryDelay(ex);
+      return null;
+    }
+  }
+
+  void runReconnectedEvent() {
+    var reconnected = this.reconnected;
+    try {
+      if (reconnected != null) {
+        reconnected.call(connectionId);
+      }
+    } on Exception catch (ex) {
+      _logger.errorDuringReconnectedEvent(ex);
+    }
+  }
+
+  Future<void> receiveLoop(ConnectionState connectionState) {
+    _logger.receiveLoopStarting();
+
+    var timer = RestartableTimer(const Duration(seconds: 1), () {});
+
+    // connectionState.connection.transport?.stream.listen((data) {
+    //   final messages = _protocol.parseMessage(data);
+    //   for (var message in messages) {
+    //     print(message.toString());
+    //     //_processMessage(message, connectionState);
+    //   }
+    // });
+
+    return Future.value();
+  }
+
+/*
+  Future<CloseMessage?> _processMessage(
+    HubMessage message,
+    ConnectionState connectionState,
+  ) {
+    _logger.resettingKeepAliveTimer();
+    connectionState.resetTimeout();
+
+    InvocationRequest? irq;
+    switch (message.type) {
+      case MessageType.invocation:
+        break;
+      case MessageType.streamItem:
+      case MessageType.completion:
+        var invocationMessage = message as HubInvocationMessage;
+        break;
+      case MessageType.streamInvocation:
+        break;
+      case MessageType.cancelInvocation:
+        break;
+      case MessageType.ping:
+        break;
+      case MessageType.close:
+
+      default:
+    }
+  }
+*/
   Future<void> stopCore({bool? disposing}) async {
     _state.stopCts.cancel();
 
@@ -220,7 +493,7 @@ class HubConnection implements AsyncDisposable {
     }
   }
 
-  Future<void> handshake(
+  void handshake(
     ConnectionState startingConnectionState,
     CancellationToken cancellationToken,
   ) {
@@ -234,8 +507,6 @@ class HubConnection implements AsyncDisposable {
 
     final result = writeRequestMessage(handshakeRequest);
     startingConnectionState.connection.transport!.sink.add(result);
-
-    return Future.value();
   }
 
   /// Registers a handler that will be invoked when the hub method with
@@ -309,7 +580,10 @@ class ReconnectingConnectionState {
     if (!tryChangeState(expectedState, newState)) {
       _logger.stateTransitionFailed(expectedState, newState, overallState);
       throw Exception(
-          'The HubConnection failed to transition from the \'$expectedState\' state to the \'$newState\' state because it was actually in the \'$overallState\' state.');
+        'The HubConnection failed to transition from the \'$expectedState\''
+        ' state to the \'$newState\' state because it was actually in the'
+        ' \'$overallState\' state.',
+      );
     }
   }
 
@@ -344,7 +618,7 @@ class ConnectionState {
   int _nextActivationServerTimeout;
   int _nextActivationSendPing;
 
-  ConnectionContext _connection;
+  final ConnectionContext _connection;
   Future<void>? _receiveFuture;
   Exception? closeException;
   CancellationToken? uploadStreamToken;

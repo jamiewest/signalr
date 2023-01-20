@@ -20,4 +20,17 @@ enum HttpTransportType {
   final int value;
 
   final String name;
+
+  static HttpTransportType fromName(String name) {
+    switch (name) {
+      case 'LongPollingTransport':
+        return HttpTransportType.longPolling;
+      case 'ServerSentEventsTransport':
+        return HttpTransportType.serverSentEvents;
+      case 'WebSocketsTransport':
+        return HttpTransportType.webSockets;
+      default:
+        return HttpTransportType.none;
+    }
+  }
 }

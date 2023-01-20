@@ -1,4 +1,4 @@
-import 'package:extensions/src/dependency_injection/service_collection.dart';
+import 'package:extensions/dependency_injection.dart';
 
 import '../common/signalr_common/signalr_builder.dart';
 

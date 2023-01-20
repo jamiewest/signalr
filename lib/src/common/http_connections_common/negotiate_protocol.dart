@@ -4,7 +4,10 @@ import 'dart:convert';
 import 'negotiation_response.dart';
 
 /// Writes the [response] to the [output].
-void writeResponse(NegotiationResponse response, StreamSink output) {}
+void writeResponse(
+  NegotiationResponse response,
+  StreamSink<List<int>> output,
+) {}
 
 /// Parses a [NegotiationResponse] from the [content] as Json.
 NegotiationResponse parseResponse(String content) {

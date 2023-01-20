@@ -73,7 +73,7 @@ extension CompletionMessageExtensions on CompletionMessage {
 }
 
 extension PingMessageExtensions on PingMessage {
-  static PingMessage fromJson(Map<String, dynamic> json) => PingMessage();
+  static PingMessage fromJson(Map<String, dynamic> json) => const PingMessage();
 
   Map<String, dynamic> toJson() => {
         'type': type?.code.toString(),

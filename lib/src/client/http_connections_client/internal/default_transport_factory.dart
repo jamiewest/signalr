@@ -5,6 +5,7 @@ import '../../../common/http_connections_common/http_transport_type.dart';
 import '../../../common/http_connections_common/http_transports.dart';
 import '../http_connection_options.dart';
 
+import 'long_polling_transport.dart';
 import 'transport.dart';
 import 'transport_factory.dart';
 import 'web_socket_transport.dart';
@@ -54,14 +55,18 @@ class DefaultTransportFactory implements TransportFactory {
 
     // if (availableServerTransports
     //         .contains(HttpTransportType.serverSentEvents) &&
-    //     _requestedTransportType.contains(HttpTransportType.serverSentEvents)) {
+    //  _requestedTransportType.contains(HttpTransportType.serverSentEvents)) {
     //   // ServerSentEvents
     // }
 
-    // if (availableServerTransports.contains(HttpTransportType.longPolling) &&
-    //     _requestedTransportType.contains(HttpTransportType.longPolling)) {
-    //   // LongPolling
-    // }
+    if (availableServerTransports.contains(HttpTransportType.longPolling) &&
+        _requestedTransportType.contains(HttpTransportType.longPolling)) {
+      return LongPollingTransport(
+        _httpClient!,
+        _httpConnectionOptions,
+        _loggerFactory,
+      );
+    }
 
     throw Exception('No requested transports available on the server.');
   }

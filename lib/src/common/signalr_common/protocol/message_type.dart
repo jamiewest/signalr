@@ -45,4 +45,27 @@ enum MessageType {
 
   @override
   String toString() => name;
+
+  static MessageType from(int value) {
+    assert(value.clamp(1, 7) == value);
+
+    switch (value) {
+      case 1:
+        return MessageType.invocation;
+      case 2:
+        return MessageType.streamItem;
+      case 3:
+        return MessageType.completion;
+      case 4:
+        return MessageType.streamInvocation;
+      case 5:
+        return MessageType.cancelInvocation;
+      case 6:
+        return MessageType.ping;
+      case 7:
+        return MessageType.close;
+      default:
+        throw Exception('Invalid range for value.');
+    }
+  }
 }

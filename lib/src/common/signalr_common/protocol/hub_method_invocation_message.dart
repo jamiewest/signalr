@@ -55,7 +55,8 @@ class InvocationMessage extends HubMethodInvocationMessage {
       streamIds = 'Error: ${ex.toString()}';
     }
 
-    return 'InvocationMessage {{ InvocationId: \'$invocationId\', Target: \'$target\', Arguments: [ $args ], StreamIds: [ $streamIds ] }}';
+    return 'InvocationMessage {{ InvocationId: \'$invocationId\', Target:'
+        ' \'$target\', Arguments: [ $args ], StreamIds: [ $streamIds ] }}';
   }
 }
 
@@ -91,6 +92,7 @@ class StreamInvocationMessage extends HubMethodInvocationMessage {
       streamIds = 'Error: ${ex.toString()}';
     }
 
-    return 'StreamInvocation {{ InvocationId: \'$invocationId\', Target: \'$target\', Arguments: [ $args ], StreamIds: [ $streamIds ] }}';
+    return 'StreamInvocation {{ InvocationId: \'$invocationId\', Target:'
+        ' \'$target\', Arguments: [ $args ], StreamIds: [ $streamIds ] }}';
   }
 }
