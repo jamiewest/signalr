@@ -33,20 +33,20 @@ class WebSocketTransport extends Transport {
   }
 
   @override
-  StreamSink<List<int>> get sink => _sink.sink.transform(
+  StreamSink<List<int>> get output => _sink.sink.transform(
         StreamSinkTransformer<List<int>, dynamic>.fromHandlers(
           handleData: (data, sink) => sink.add(data),
         ),
       );
 
   @override
-  Stream<List<int>> get stream => _controller.stream;
+  Stream<List<int>> get input => _controller.stream;
 
   @override
   Future<void> start({
     required Uri url,
     required TransferFormat transferFormat,
-    required CancellationToken? cancellationToken,
+    CancellationToken? cancellationToken,
   }) async {
     var uriBuilder = UriBuilder.fromUri(url);
     uriBuilder.scheme = uriBuilder.scheme!.replaceFirst(RegExp(r'^http'), 'ws');
@@ -56,9 +56,11 @@ class WebSocketTransport extends Transport {
       throw Exception('Unable to get channel');
     }
 
-    _channel!.stream.listen((e) => print(e));
-
-    //_channel!.cast<List<int>>().stream.listen(_controller.add);
+    await _channel!.ready.then(
+      (value) => _channel!.cast<List<int>>().stream.listen(
+            _controller.add,
+          ),
+    );
   }
 
   @override

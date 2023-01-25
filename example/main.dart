@@ -20,15 +20,15 @@ import 'package:signalr/src/common/http_connections_common/http_transport_type.d
 Future<void> main() async {
   final hubConnection = HubConnectionBuilder()
       .addJsonProtocol()
-      .configureLogging((logging) => logging
-        ..addDebug()
-        ..setMinimumLevel(LogLevel.trace))
+      .configureLogging(
+        (logging) => logging
+          ..addDebug()
+          ..setMinimumLevel(LogLevel.trace),
+      )
       .withUrl(
-    Uri.parse('http://127.0.0.1:5115/chatHub'),
-    transports: [
-      HttpTransportType.longPolling,
-    ],
-  ).build();
+        Uri.parse('http://127.0.0.1:5115/chatHub'),
+      )
+      .build();
 
   await hubConnection.start();
 

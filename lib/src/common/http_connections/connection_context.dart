@@ -1,5 +1,6 @@
 import 'package:extensions/configuration.dart';
-import 'package:stream_channel/stream_channel.dart';
+
+import '../shared/duplex_pipe.dart';
 
 /// Encapsulates all information about an individual connection.
 abstract class ConnectionContext extends AsyncDisposable {
@@ -7,7 +8,7 @@ abstract class ConnectionContext extends AsyncDisposable {
   /// this connection in trace logs.
   String? connectionId;
 
-  /// Gets or sets the [StreamChannel] that can be used to
+  /// Gets or sets the [DuplexPipe] that can be used to
   /// read or write data on this connection.
-  StreamChannel<List<int>>? transport;
+  DuplexPipe? transport;
 }

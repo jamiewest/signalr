@@ -11,8 +11,10 @@ import '../../common/http_connections/connection_context.dart';
 import '../../common/http_connections_common/http_transport_type.dart';
 import '../../common/http_connections_common/http_transports.dart';
 import '../../common/http_connections_common/negotiation_response.dart';
+import '../../common/shared/duplex_pipe.dart';
 import '../../common/signalr_common/protocol/transfer_format.dart';
 
+import '../core/internal/connection_log_scope.dart';
 import 'http_connection_logger_extensions.dart';
 import 'http_connection_options.dart';
 import 'internal/access_token_http_message_handler.dart';
@@ -37,9 +39,10 @@ class HttpConnection implements ConnectionContext {
   bool _hasInherentKeepAlive = false;
   BaseClient? _httpClient;
   final HttpConnectionOptions _httpConnectionOptions;
-  Transport? _transport;
+  DuplexPipe? _transport;
   late final TransportFactory _transportFactory;
   String? _connectionId;
+  final ConnectionLogScope _logScope;
   final LoggerFactory _loggerFactory;
   final Uri _url;
   AccessTokenProvider? _accessTokenProvider;
@@ -51,7 +54,8 @@ class HttpConnection implements ConnectionContext {
   })  : _loggerFactory = loggerFactory!,
         _logger = loggerFactory.createLogger('HttpConnection'),
         _httpConnectionOptions = httpConnectionOptions,
-        _url = httpConnectionOptions.url! {
+        _url = httpConnectionOptions.url!,
+        _logScope = ConnectionLogScope() {
     if (!httpConnectionOptions.skipNegotiation ||
         !httpConnectionOptions.transports!.hasWebSockets) {
       _httpClient = _createHttpClient();
@@ -70,14 +74,14 @@ class HttpConnection implements ConnectionContext {
   String? connectionId;
 
   @override
-  set transport(StreamChannel<List<int>>? transport) {
+  set transport(DuplexPipe? transport) {
     if (transport != null) {
       _transport = transport as Transport;
     }
   }
 
   @override
-  StreamChannel<List<int>> get transport {
+  DuplexPipe get transport {
     _checkDisposed();
     if (_transport == null) {
       throw Exception(
@@ -336,7 +340,7 @@ class HttpConnection implements ConnectionContext {
   ) async {
     // Construct the transport
     final transport = _transportFactory.createTransport(transportType);
-    final resultTransport = HttpTransportType.fromName(
+    final selectedTransportType = HttpTransportType.fromName(
       transport.runtimeType.toString(),
     );
 
@@ -347,7 +351,7 @@ class HttpConnection implements ConnectionContext {
         cancellationToken: cancellationToken,
       );
     } on Exception catch (ex) {
-      _logger.errorStartingTransport(resultTransport, ex);
+      _logger.errorStartingTransport(selectedTransportType, ex);
 
       _transport = null;
       rethrow;
@@ -360,7 +364,7 @@ class HttpConnection implements ConnectionContext {
     // (we don't want to set these until the transport is definitely running).
     _transport = transport;
 
-    _logger.transportStarted(resultTransport);
+    _logger.transportStarted(selectedTransportType);
   }
 
   BaseClient _createHttpClient() {
@@ -409,16 +413,14 @@ class HttpConnection implements ConnectionContext {
     }
   }
 
-  static bool isWebSocketsSupported() {
-    return true;
-  }
+  static bool isWebSocketsSupported() => true;
 
   Future<NegotiationResponse> _getNegotiationResponse(
-    Uri url,
+    Uri uri,
     CancellationToken? cancellationToken,
   ) async {
     final negotiationResponse = await _negotiate(
-      url,
+      uri,
       _httpClient!,
       _logger,
       cancellationToken,
@@ -427,13 +429,12 @@ class HttpConnection implements ConnectionContext {
     // the negotiation response contains a connectionToken that will
     // be required to connect. Otherwise we just set the connectionId
     // and the connectionToken on the client to the same value.
-
     _connectionId = negotiationResponse.connectionId!;
     if (negotiationResponse.version == 0) {
       negotiationResponse.connectionToken = _connectionId;
     }
 
-    // _logScope.ConnectionId = _connectionId;
+    _logScope.connectionId = _connectionId;
     return negotiationResponse;
   }
 

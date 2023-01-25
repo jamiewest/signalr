@@ -27,7 +27,7 @@ enum HttpTransportType {
         return HttpTransportType.longPolling;
       case 'ServerSentEventsTransport':
         return HttpTransportType.serverSentEvents;
-      case 'WebSocketsTransport':
+      case 'WebSocketTransport':
         return HttpTransportType.webSockets;
       default:
         return HttpTransportType.none;

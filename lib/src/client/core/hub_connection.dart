@@ -196,7 +196,7 @@ class HubConnection implements AsyncDisposable {
 
     final startingConnectionState = ConnectionState(connection, this);
 
-    startingConnectionState.connection.transport?.stream.listen((data) {
+    startingConnectionState.connection.transport?.input.listen((data) {
       final messages = _protocol.parseMessage(data);
       for (var message in messages) {
         print(message.toString());
@@ -506,7 +506,7 @@ class HubConnection implements AsyncDisposable {
     );
 
     final result = writeRequestMessage(handshakeRequest);
-    startingConnectionState.connection.transport!.sink.add(result);
+    startingConnectionState.connection.transport!.output.add(result);
   }
 
   /// Registers a handler that will be invoked when the hub method with
@@ -539,7 +539,7 @@ class HubConnection implements AsyncDisposable {
     var message = _protocol.writeMessage(hubMessage);
 
     _logger.sendingMessage(hubMessage);
-    connectionState.connection.transport!.sink.add(message);
+    connectionState.connection.transport!.output.add(message);
     _logger.messageSent(hubMessage);
 
     // We've sent a message, so don't ping for a while

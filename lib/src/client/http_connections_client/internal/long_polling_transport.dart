@@ -22,10 +22,10 @@ class LongPollingTransport extends Transport {
   Future<void> running = Future.value();
 
   @override
-  Stream<List<int>> get stream => _transport!.stream;
+  Stream<List<int>> get input => _transport!.stream;
 
   @override
-  StreamSink<List<int>> get sink => _transport!.sink;
+  StreamSink<List<int>> get output => _transport!.sink;
 
   LongPollingTransport(
     BaseClient httpClient,
@@ -41,7 +41,7 @@ class LongPollingTransport extends Transport {
   Future<void> start({
     required Uri url,
     required TransferFormat transferFormat,
-    required CancellationToken? cancellationToken,
+    CancellationToken? cancellationToken,
   }) async {
     if (transferFormat != TransferFormat.binary &&
         transferFormat != TransferFormat.text) {
